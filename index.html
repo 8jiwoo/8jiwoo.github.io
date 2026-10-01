@@ -12,23 +12,24 @@
 /* ---------- Colour tokens (light = daytime room, dark = night room) ---------- */
 :root{
   --scene:day;
-  --ground:#F1F3FF;
-  --text:#0B1250;
-  --dim:#3B4580;
-  --display:#2339E6;
-  --panel:#FFFFFF;
-  --panel-text:#0B1250;
-  --panel-dim:#4A5389;
-  --rule:rgba(11,18,80,.18);
-  --bar:#2339E6;
-  --bar-text:#FFFFFF;
-  --shadow:#0B1250;
-  --stamp-bg:#2339E6;
-  --stamp-text:#FFFFFF;
-  --cur-fill:#2339E6;
-  --cur-line:#FFFFFF;
-  --cur-text:#FFFFFF;
-  --focus:#0B1250;
+  --ground:#C9C6BE;
+  --text:#17181B;
+  --dim:#4A4A4A;
+  --display:#5C1A16;
+  --panel:#FFFDF6;
+  --panel-text:#17181B;
+  --panel-dim:#4A4A4A;
+  --rule:rgba(23,24,27,.14);
+  --bar:#17181B;
+  --bar-text:#EDE7D9;
+  --line:#17181B;
+  --shadow:#17181B;
+  --stamp-bg:#17181B;
+  --stamp-text:#E8DCB0;
+  --cur-fill:#17181B;
+  --cur-line:#EDE7D9;
+  --cur-text:#E8DCB0;
+  --focus:#17181B;
   --sans:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
   color-scheme:light;
@@ -39,22 +40,22 @@
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
     --scene:night;
-    --ground:#060A2A; --text:#E6EBFF; --dim:#98A3D6; --display:#8198FF;
-    --panel:#0B1143; --panel-text:#E6EBFF; --panel-dim:#A3ADE0; --rule:rgba(230,235,255,.2);
-    --bar:#8198FF; --bar-text:#060A2A; --shadow:#8198FF;
-    --stamp-bg:#8198FF; --stamp-text:#060A2A;
-    --cur-fill:#8198FF; --cur-line:#060A2A; --cur-text:#060A2A;
-    --focus:#E6EBFF; color-scheme:dark;
+    --ground:#0B0C0E; --text:#D6D2C8; --dim:#8E8A82; --display:#A4402F;
+    --panel:#1F1E38; --panel-text:#F4EEE3; --panel-dim:#B5B0C8; --rule:rgba(244,238,227,.16);
+    --bar:#F4EEE3; --bar-text:#15142A; --line:#F4EEE3; --shadow:#000;
+    --stamp-bg:#F7B32B; --stamp-text:#15142A;
+    --cur-fill:#F7B32B; --cur-line:#15142A; --cur-text:#15142A;
+    --focus:#F4EEE3; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --scene:night;
-  --ground:#060A2A; --text:#E6EBFF; --dim:#98A3D6; --display:#8198FF;
-  --panel:#0B1143; --panel-text:#E6EBFF; --panel-dim:#A3ADE0; --rule:rgba(230,235,255,.2);
-  --bar:#8198FF; --bar-text:#060A2A; --shadow:#8198FF;
-  --stamp-bg:#8198FF; --stamp-text:#060A2A;
-  --cur-fill:#8198FF; --cur-line:#060A2A; --cur-text:#060A2A;
-  --focus:#E6EBFF; color-scheme:dark;
+  --ground:#0B0C0E; --text:#D6D2C8; --dim:#8E8A82; --display:#A4402F;
+  --panel:#1F1E38; --panel-text:#F4EEE3; --panel-dim:#B5B0C8; --rule:rgba(244,238,227,.16);
+  --bar:#F4EEE3; --bar-text:#15142A; --line:#F4EEE3; --shadow:#000;
+  --stamp-bg:#F7B32B; --stamp-text:#15142A;
+  --cur-fill:#F7B32B; --cur-line:#15142A; --cur-text:#15142A;
+  --focus:#F4EEE3; color-scheme:dark;
 }
 
 *,*::before,*::after{box-sizing:inherit}
@@ -107,18 +108,30 @@ a{color:inherit}
 /* ---------- Overlay stage (sits above the canvas, lets drags through) ---------- */
 #stage{position:relative;z-index:1;height:100%;overflow:hidden;pointer-events:none}
 
-.hud{
-  position:absolute;left:0;right:0;top:0;z-index:5;
-  display:flex;justify-content:space-between;align-items:flex-start;gap:12px 24px;
-  padding:14px 20px 0;pointer-events:none;
+.compass{position:absolute;left:0;right:0;top:0;height:50px;z-index:6;pointer-events:none}
+.compass::after{content:"";position:absolute;left:14px;right:14px;top:42px;height:1.5px;background:rgba(255,253,246,.92);box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.navi{
+  position:absolute;left:0;top:9px;pointer-events:auto;padding:6px 6px;
+  font-size:14px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;
+  color:#FFFDF6;text-shadow:0 1px 3px rgba(0,0,0,.6);will-change:transform;transition:color .15s ease,opacity .3s ease;
 }
-.hud > *{pointer-events:auto;transition:opacity .3s ease;background:var(--ground);padding:10px 14px;box-shadow:0 0 0 2px var(--bar)}
-.hud > .sound{padding:0 14px}
-.focus .hud > div:first-child{opacity:0;pointer-events:none}
-.who{margin:0;font-size:clamp(22px,2.2vw,30px);font-weight:900;line-height:.9;text-transform:uppercase;font-variation-settings:"wdth" 70;color:var(--display)}
-.intro{margin:8px 0 0;max-width:38ch;font-size:14px;line-height:1.35}
-.hint{margin:4px 0 0;font-size:13px;color:var(--dim)}
-.sound{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 6px;font-size:14px;font-weight:600;white-space:nowrap}
+.navi:hover,.navi[aria-expanded="true"]{color:#FFE14A}
+.navi.off{opacity:0;pointer-events:none}
+.brand{position:absolute;left:16px;bottom:14px;z-index:5;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;color:#FFFDF6;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:auto}
+.brand strong{font-size:18px;font-weight:900;letter-spacing:.02em;text-transform:uppercase;font-variation-settings:"wdth" 80}
+.brand span{font-size:12px;font-weight:600}
+.hint{position:absolute;left:50%;bottom:16px;z-index:5;margin:0;transform:translateX(-50%);font-size:13px;font-weight:600;color:#FFFDF6;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none;transition:opacity .6s ease}
+.hint.gone{opacity:0}
+.vhs{position:absolute;left:16px;top:58px;z-index:5;font-family:var(--mono);font-size:13px;letter-spacing:.08em;color:#EDE7D9;text-shadow:0 0 6px rgba(0,0,0,.7);pointer-events:none}
+.vhs .rec{margin-right:8px}
+.mute{position:absolute;right:14px;bottom:10px;z-index:5;width:44px;height:44px;display:grid;place-items:center;pointer-events:auto}
+.mute svg{width:24px;height:24px;fill:none;stroke:#FFFDF6;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.mute .spk{fill:#FFFDF6}
+.mute .waves{display:none}
+.mute[aria-pressed="true"] .waves{display:block}
+.mute[aria-pressed="true"] .slash{display:none}
+.mute:hover svg{stroke:#FFE14A}.mute:hover .spk{fill:#FFE14A}
+.sound{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 12px;font-size:14px;font-weight:700;white-space:nowrap;border:1.5px solid var(--line);border-radius:999px}
 .eq{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
 .eq i{display:block;width:3px;height:3px;background:currentColor}
 .sound[aria-pressed="true"] .eq i{animation:eq .8s ease-in-out infinite alternate}
@@ -162,33 +175,35 @@ a{color:inherit}
   position:absolute;left:0;top:0;z-index:10;pointer-events:auto;
   width:min(var(--w,480px),calc(100% - 24px));max-height:calc(100% - 88px);
   display:flex;flex-direction:column;
-  background:var(--panel);color:var(--panel-text);
-  border:2px solid var(--bar);box-shadow:8px 8px 0 var(--shadow);
+  --panel-text:#FFF8EC;--panel-dim:rgba(255,248,236,.74);--rule:rgba(255,255,255,.2);--line:rgba(255,255,255,.55);
+  background:rgba(34,24,20,.55);-webkit-backdrop-filter:blur(16px) saturate(1.25);backdrop-filter:blur(16px) saturate(1.25);
+  color:var(--panel-text);border:1px solid rgba(255,255,255,.28);border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.28);
 }
 .win:focus{outline:none}
 .win:focus-visible{outline:3px solid var(--focus);outline-offset:4px}
-.win.pop{animation:winPop .24s cubic-bezier(.2,1.4,.4,1)}
+.win.pop{animation:winPop .28s cubic-bezier(.2,.9,.3,1)}
 .win.nudge{animation:winNudge .3s ease}
-@keyframes winPop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
+@keyframes winPop{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
 @keyframes winNudge{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
 .win-bar{
   flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;
   min-height:44px;padding-left:14px;
-  background:var(--bar);color:var(--bar-text);
+  flex-direction:row-reverse;justify-content:flex-end;gap:12px;padding:14px 16px 2px;min-height:0;
+  background:none;color:var(--panel-text);
   cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;
 }
 .win.dragging .win-bar{cursor:grabbing}
-.win-title{margin:0;font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:.02em;font-variation-settings:"wdth" 80}
-.win-close{width:44px;height:44px;display:grid;place-items:center;font-size:28px;line-height:1;color:var(--bar-text)}
-.win-close:hover{background:var(--bar-text);color:var(--bar)}
-.win-bar :focus-visible{outline-color:var(--bar-text);outline-offset:-5px}
+.win-title{margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.07em}
+.win-close{min-height:30px;padding:0 11px;border-radius:5px;background:rgba(255,255,255,.2);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--panel-text)}
+.win-close:hover{background:#FFE14A;color:#2A2233}
+.win-bar :focus-visible{outline-color:#FFE14A;outline-offset:2px}
 .win-body{overflow:auto;overscroll-behavior:contain;padding:18px 22px 24px}
 .win-body p{margin:0 0 12px}
 
 .plist{list-style:none;margin:0;padding:0}
 .plist li + li{border-top:1px solid var(--rule)}
 .proj{width:100%;display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:14px 8px;transition:background .12s,color .12s}
-.proj:hover,.proj:focus-visible{background:var(--bar);color:var(--bar-text)}
+.proj:hover,.proj:focus-visible{background:rgba(255,255,255,.12);color:#FFE14A}
 .proj-name{font-size:clamp(20px,2.1vw,26px);font-weight:800;line-height:1;text-transform:uppercase;font-variation-settings:"wdth" 72}
 .proj-kind{flex:none;max-width:17ch;text-align:right;font-size:13px;line-height:1.3;color:var(--panel-dim)}
 .proj:hover .proj-kind,.proj:focus-visible .proj-kind{color:inherit}
@@ -213,7 +228,7 @@ a{color:inherit}
 .skills > div:first-child{padding-top:0;border-top:0}
 .skills dt{padding-top:4px;font-size:14px;font-weight:800;text-transform:uppercase;font-variation-settings:"wdth" 80}
 .skills dd{margin:0}
-.w-sub{margin:18px 0 4px;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--display)}
+.w-sub{margin:18px 0 4px;padding-left:8px;border-left:6px solid var(--c);font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--panel-text)}
 .w-sub:first-child{margin-top:0}
 .rows{list-style:none;margin:0;padding:0}
 .rows li{display:grid;grid-template-columns:1fr auto;column-gap:16px;padding:10px 0;border-top:1px solid var(--rule)}
@@ -228,6 +243,9 @@ a{color:inherit}
 .c-label{font-size:14px;color:var(--panel-dim)}
 .c-val{font-size:clamp(18px,2vw,24px);font-weight:700;text-align:right;font-variation-settings:"wdth" 80}
 .c-val a{color:inherit;text-decoration-thickness:2px;text-underline-offset:4px}
+.gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:6px}
+.tile{aspect-ratio:4/3;display:grid;place-items:center;border:1.5px dashed var(--panel-dim);border-radius:4px;color:var(--panel-dim);font-size:14px}
+.gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border:2px solid var(--line);border-radius:4px;display:block}
 .c-val a:hover{color:var(--display)}
 
 /* ---------- Easter egg flash ---------- */
@@ -244,18 +262,12 @@ a{color:inherit}
 .cursor{position:fixed;left:0;top:0;z-index:100;pointer-events:none;display:none;opacity:0;transition:opacity .15s}
 html.has-cursor .cursor{display:block}
 @media (hover:hover) and (pointer:fine){html.has-cursor,html.has-cursor *{cursor:none !important}}
-.cursor .dot{
-  position:absolute;left:-7px;top:-7px;width:14px;height:14px;border-radius:50%;
-  background:var(--cur-fill);border:2px solid var(--cur-line);
-  transition:width .18s,height .18s,left .18s,top .18s,background .18s;
-}
-.cursor.big .dot{width:54px;height:54px;left:-27px;top:-27px;background:transparent;border:2.5px solid var(--cur-fill);box-shadow:0 0 0 1.5px var(--cur-line),inset 0 0 0 1.5px var(--cur-line)}
-.cursor .lbl{
-  position:absolute;left:22px;top:22px;padding:3px 7px;white-space:nowrap;
-  background:var(--cur-fill);color:var(--cur-text);box-shadow:0 0 0 1.5px var(--cur-line);
-  font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;opacity:0;transition:opacity .12s;
-}
-.cursor.big .lbl{opacity:1}
+.cursor .g{position:absolute;left:-14px;top:-2px;width:40px;height:40px;background:no-repeat center/contain;transition:transform .12s ease;filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))}
+.cursor .g-hot{opacity:0}
+.cursor.hot .g-idle{opacity:0}
+.cursor.hot .g-hot{opacity:1;transform:rotate(-10deg) scale(1.08)}
+.cursor.grab .g{transform:rotate(12deg) scale(.95)}
+.cursor .lbl{position:absolute;left:24px;top:36px;padding:3px 8px;border-radius:4px;background:rgba(34,24,20,.7);color:#FFE14A;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 
 /* ---------- Entrance ---------- */
 @media (prefers-reduced-motion:no-preference){
@@ -273,10 +285,17 @@ html.has-cursor .cursor{display:block}
 
 /* ---------- No WebGL: the labels become a plain menu ---------- */
 .no3d #scene{display:none}
-.no3d .pins{inset:auto 20px 24px 20px;display:flex;flex-wrap:wrap;gap:14px}
+.no3d .compass{height:auto;display:flex;flex-wrap:wrap;gap:6px;padding:12px;pointer-events:auto;background:var(--text)}
+.no3d .compass::after{display:none}
+.no3d .navi{position:static;transform:none !important}
 .no3d .tag{position:relative;transform:none !important;scale:1 !important}
 .no3d .tag::after{display:none}
 
+@media (max-width:760px){
+  .hint{bottom:64px}
+  .brand strong{font-size:16px}
+}
+}
 @media (max-width:640px){
   .tag{font-size:12px;min-height:34px;padding:6px 8px 6px 10px;gap:6px}
   .tag::before{content:"";position:absolute;inset:-6px -2px}
@@ -297,7 +316,7 @@ html.has-cursor .cursor{display:block}
 </head>
 <body>
 
-<canvas id="scene" role="img" aria-label="A first-person view from the middle of a large bedroom-studio, seen through a fisheye lens: a desk with a monitor, a pinboard, a bookshelf, a server rack with a padlock, a window over a bed, a sofa with a coffee table, a whiteboard, framed prints, a door, a wall phone, a ceiling fan, a lamp, a speaker, a chair, a plant, a beanbag, a skateboard and a rubber duck. The labelled buttons open each section."></canvas>
+<canvas id="scene" role="img" aria-label="A first-person view from the middle of a moody, fog-lit loft apartment, seen through a fisheye lens: a couch, a kitchen counter, a dining table, framed art on a wall, and a window looking out over a foggy city skyline. Use the menu at the top to open each section."></canvas>
 
 <!-- ============ LOADER + ENTER GATE ============ -->
 <div class="boot" id="boot">
@@ -320,32 +339,33 @@ html.has-cursor .cursor{display:block}
 
 <!-- ============ OVERLAY ============ -->
 <main id="stage" inert>
-  <header class="hud">
-    <div>
-      <h1 class="who">Jiwoo Ha</h1>
-      <p class="intro">IT student at NYP School of Information Technology, Singapore.</p>
-      <p class="hint" id="hint">Drag to look around. Scroll to zoom. Click anything in the room.</p>
-    </div>
-    <button class="sound" id="soundBtn" aria-pressed="false" data-cursor="Sound">
-      <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span><span id="soundLbl">Sound off</span>
-    </button>
-  </header>
+  <nav class="compass" aria-label="Sections">
+    <button class="navi" data-win="work" aria-expanded="false" aria-controls="win-work">Projects</button>
+    <button class="navi" data-win="education" aria-expanded="false" aria-controls="win-education">Education</button>
+    <button class="navi" data-win="art" aria-expanded="false" aria-controls="win-art">Art</button>
+    <button class="navi" data-win="certs" aria-expanded="false" aria-controls="win-certs">Certifications</button>
+    <button class="navi" data-win="awards" aria-expanded="false" aria-controls="win-awards">Awards</button>
+    <button class="navi" data-win="activities" aria-expanded="false" aria-controls="win-activities">Activities</button>
+    <button class="navi" data-win="clubs" aria-expanded="false" aria-controls="win-clubs">Clubs</button>
+    <button class="navi" data-win="languages" aria-expanded="false" aria-controls="win-languages">Languages</button>
+    <button class="navi" data-win="volunteering" aria-expanded="false" aria-controls="win-volunteering">Volunteering</button>
+    <button class="navi" data-win="contact" aria-expanded="false" aria-controls="win-contact">Contact</button>
+  </nav>
+  <button class="brand" id="brand" data-cursor="Home"><strong>Jiwoo Ha</strong><span>IT student, NYP School of IT</span></button>
+  <div class="vhs" aria-hidden="true"><span class="rec">&#9654; PLAY</span> <span id="vhsTime"></span></div>
+  <p class="hint" id="hint">Drag to look around. Click anything in the room.</p>
+  <button class="mute" id="soundBtn" aria-pressed="false" aria-label="Sound off" data-cursor="Sound">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9h4l5-4v14l-5-4H4z"/><path class="waves" d="M16 9.5a3.5 3.5 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10"/><path class="slash" d="M16 9l5 6M21 9l-5 6"/></svg>
+    <span id="soundLbl" class="sr">Sound off</span>
+  </button>
 
   <div class="stamps" id="stamps" aria-hidden="true"></div>
 
-  <nav class="pins" aria-label="Sections">
-    <button class="tag" style="--i:0" data-win="work" aria-expanded="false" aria-controls="win-work" data-cursor="Open">Projects <span class="st" aria-hidden="true">+</span></button>
-    <button class="tag" style="--i:1" data-win="about" aria-expanded="false" aria-controls="win-about" data-cursor="Open">About <span class="st" aria-hidden="true">+</span></button>
-    <button class="tag" style="--i:2" data-win="activities" aria-expanded="false" aria-controls="win-activities" data-cursor="Open">Activities <span class="st" aria-hidden="true">+</span></button>
-    <button class="tag" style="--i:3" data-win="awards" aria-expanded="false" aria-controls="win-awards" data-cursor="Open">Awards <span class="st" aria-hidden="true">+</span></button>
-    <button class="tag" style="--i:4" data-win="contact" aria-expanded="false" aria-controls="win-contact" data-cursor="Open">Contact <span class="st" aria-hidden="true">+</span></button>
-  </nav>
-
   <!-- ============ PROJECTS (monitor) ============ -->
-  <section class="win" id="win-work" role="dialog" aria-labelledby="t-work" tabindex="-1" style="--w:580px" hidden>
+  <section class="win" id="win-work" role="dialog" aria-labelledby="t-work" tabindex="-1" style="--w:580px;--c:#5AC8FF;--ct:#0B0C0E" hidden>
     <div class="win-bar" data-cursor="Drag">
       <h2 class="win-title" id="t-work">Projects</h2>
-      <button class="win-close" aria-label="Close Projects" data-cursor="Close">×</button>
+      <button class="win-close" aria-label="Close Projects" data-cursor="Close">Back</button>
     </div>
     <div class="win-body">
       <div class="plist-wrap">
@@ -395,19 +415,27 @@ html.has-cursor .cursor{display:block}
     </div>
   </section>
 
-  <!-- ============ ABOUT (pinboard) ============ -->
-  <section class="win" id="win-about" role="dialog" aria-labelledby="t-about" tabindex="-1" style="--w:470px" hidden>
+  <!-- ============ EDUCATION (study shelf) ============ -->
+  <section class="win" id="win-education" role="dialog" aria-labelledby="t-education" tabindex="-1" style="--w:480px;--c:#7BE0C8;--ct:#0B0C0E" hidden>
     <div class="win-bar" data-cursor="Drag">
-      <h2 class="win-title" id="t-about">About</h2>
-      <button class="win-close" aria-label="Close About" data-cursor="Close">×</button>
+      <h2 class="win-title" id="t-education">Education</h2>
+      <button class="win-close" aria-label="Close Education" data-cursor="Close">Back</button>
     </div>
     <div class="win-body">
       <p class="d-lede">Jiwoo Ha, IT student at NYP School of Information Technology, Singapore.</p>
-      <h3 class="w-sub">Education</h3>
       <ul class="rows">
         <li><span class="r-title">NYP School of Information Technology</span><span class="r-date">Apr 2025 – Apr 2028</span><span class="r-org">Diploma, Information Technology</span></li>
       </ul>
-      <h3 class="w-sub">Languages I speak</h3>
+    </div>
+  </section>
+
+  <!-- ============ LANGUAGES (globe) ============ -->
+  <section class="win" id="win-languages" role="dialog" aria-labelledby="t-languages" tabindex="-1" style="--w:440px;--c:#FFD36B;--ct:#0B0C0E" hidden>
+    <div class="win-bar" data-cursor="Drag">
+      <h2 class="win-title" id="t-languages">Languages</h2>
+      <button class="win-close" aria-label="Close Languages" data-cursor="Close">Back</button>
+    </div>
+    <div class="win-body">
       <ul class="rows">
         <li><span class="r-title">Korean</span><span class="r-date">Native</span></li>
         <li><span class="r-title">English</span><span class="r-date">Native</span></li>
@@ -417,25 +445,27 @@ html.has-cursor .cursor{display:block}
     </div>
   </section>
 
-  <!-- ============ ACTIVITIES (whiteboard) ============ -->
-  <section class="win" id="win-activities" role="dialog" aria-labelledby="t-activities" tabindex="-1" style="--w:540px" hidden>
+  <!-- ============ CLUBS (jacket and backpack in the hallway) ============ -->
+  <section class="win" id="win-clubs" role="dialog" aria-labelledby="t-clubs" tabindex="-1" style="--w:480px;--c:#6FE3FF;--ct:#0B0C0E" hidden>
     <div class="win-bar" data-cursor="Drag">
-      <h2 class="win-title" id="t-activities">Activities</h2>
-      <button class="win-close" aria-label="Close Activities" data-cursor="Close">×</button>
+      <h2 class="win-title" id="t-clubs">Clubs</h2>
+      <button class="win-close" aria-label="Close Clubs" data-cursor="Close">Back</button>
     </div>
     <div class="win-body">
-      <h3 class="w-sub">Clubs and societies</h3>
       <ul class="rows">
         <li><span class="r-title">Publicity Subcommittee Member</span><span class="r-date">2025 – present</span><span class="r-org">Swift Club</span></li>
         <li><span class="r-title">Subcommittee Member</span><span class="r-date">2024 – 2025</span><span class="r-org">SEG Club</span></li>
       </ul>
-      <h3 class="w-sub">Other activities</h3>
-      <ul class="rows">
-        <li><span class="r-title">SDG Open Hack</span><span class="r-date">2025</span></li>
-        <li><span class="r-title">Represented NYP at IMPACT WEEK</span><span class="r-date">2025</span></li>
-        <li><span class="r-title">Assistant Student Organiser</span><span class="r-date">2024</span><span class="r-org">SEG Mind Your Wellness</span></li>
-      </ul>
-      <h3 class="w-sub">Volunteering</h3>
+    </div>
+  </section>
+
+  <!-- ============ VOLUNTEERING (donation box and tote) ============ -->
+  <section class="win" id="win-volunteering" role="dialog" aria-labelledby="t-volunteering" tabindex="-1" style="--w:540px;--c:#8CE68C;--ct:#0B0C0E" hidden>
+    <div class="win-bar" data-cursor="Drag">
+      <h2 class="win-title" id="t-volunteering">Volunteering</h2>
+      <button class="win-close" aria-label="Close Volunteering" data-cursor="Close">Back</button>
+    </div>
+    <div class="win-body">
       <ul class="rows">
         <li><span class="r-title">Assistant Student Organiser</span><span class="r-date">2025</span><span class="r-org">Nanyang Polytechnic, Social Services · CNY Celebration with the Elderly</span><span class="r-text">Organised a Chinese New Year lunch gathering for the elderly in collaboration with Project Love Lunch. Worked with my team from the ground up and served as AIC.</span></li>
         <li><span class="r-title">Volunteer</span><span class="r-date">2026</span><span class="r-org">Nanyang Polytechnic, Social Services · Project Rejuven-Aid</span><span class="r-text">As part of the Lumina Scholars Program, took part in Project Rejuven-Aid (also known as Silver Homes), a volunteer-driven initiative to create healthy, safe and clean living environments.</span></li>
@@ -443,19 +473,31 @@ html.has-cursor .cursor{display:block}
     </div>
   </section>
 
-  <!-- ============ AWARDS (bookshelf) ============ -->
-  <section class="win" id="win-awards" role="dialog" aria-labelledby="t-awards" tabindex="-1" style="--w:540px" hidden>
+  <!-- ============ ART (easel + framed pieces) ============ -->
+  <section class="win" id="win-art" role="dialog" aria-labelledby="t-art" tabindex="-1" style="--w:520px;--c:#FF6FB5;--ct:#0B0C0E" hidden>
     <div class="win-bar" data-cursor="Drag">
-      <h2 class="win-title" id="t-awards">Awards and certifications</h2>
-      <button class="win-close" aria-label="Close Awards and certifications" data-cursor="Close">×</button>
+      <h2 class="win-title" id="t-art">Art</h2>
+      <button class="win-close" aria-label="Close Art" data-cursor="Close">Back</button>
     </div>
     <div class="win-body">
-      <h3 class="w-sub">Honours and awards</h3>
-      <ul class="rows">
-        <li><span class="r-title">Director's List AY 2025/26 Semester 1</span><span class="r-date">Sep 2025</span><span class="r-org">NYP School of Information Technology</span></li>
-        <li><span class="r-title">Daisy Phay-NYP Foundation Scholarship</span><span class="r-date">Aug 2024</span><span class="r-org">Issued by Nanyang Polytechnic</span></li>
-      </ul>
-      <h3 class="w-sub">Licences and certifications</h3>
+      <p class="d-lede">Art is my hobby outside of code.</p>
+      <!-- EDIT: replace each placeholder tile with <img src="..." alt="description of the artwork"> -->
+      <div class="gallery">
+        <div class="tile">[Artwork 1]</div>
+        <div class="tile">[Artwork 2]</div>
+        <div class="tile">[Artwork 3]</div>
+        <div class="tile">[Artwork 4]</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ CERTIFICATIONS (framed certificates) ============ -->
+  <section class="win" id="win-certs" role="dialog" aria-labelledby="t-certs" tabindex="-1" style="--w:540px;--c:#FFC46B;--ct:#0B0C0E" hidden>
+    <div class="win-bar" data-cursor="Drag">
+      <h2 class="win-title" id="t-certs">Certifications</h2>
+      <button class="win-close" aria-label="Close Certifications" data-cursor="Close">Back</button>
+    </div>
+    <div class="win-body">
       <ul class="rows">
         <li><span class="r-title">Certificate of Completion: AI Fluency Framework &amp; Foundations</span><span class="r-date">Jan 2026</span><span class="r-org">Anthropic · Credential ID ysw85cow8whc</span></li>
         <li><span class="r-title">Web Development Fundamentals</span><span class="r-date">Jul 2025</span><span class="r-org">IBM</span></li>
@@ -464,11 +506,40 @@ html.has-cursor .cursor{display:block}
     </div>
   </section>
 
+  <!-- ============ AWARDS (trophy shelf) ============ -->
+  <section class="win" id="win-awards" role="dialog" aria-labelledby="t-awards" tabindex="-1" style="--w:500px;--c:#FF8A5A;--ct:#0B0C0E" hidden>
+    <div class="win-bar" data-cursor="Drag">
+      <h2 class="win-title" id="t-awards">Awards</h2>
+      <button class="win-close" aria-label="Close Awards" data-cursor="Close">Back</button>
+    </div>
+    <div class="win-body">
+      <ul class="rows">
+        <li><span class="r-title">Director's List AY 2025/26 Semester 1</span><span class="r-date">Sep 2025</span><span class="r-org">NYP School of Information Technology</span></li>
+        <li><span class="r-title">Daisy Phay-NYP Foundation Scholarship</span><span class="r-date">Aug 2024</span><span class="r-org">Issued by Nanyang Polytechnic</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ ACTIVITIES (cork board) ============ -->
+  <section class="win" id="win-activities" role="dialog" aria-labelledby="t-activities" tabindex="-1" style="--w:520px;--c:#B98CFF;--ct:#0B0C0E" hidden>
+    <div class="win-bar" data-cursor="Drag">
+      <h2 class="win-title" id="t-activities">Activities</h2>
+      <button class="win-close" aria-label="Close Activities" data-cursor="Close">Back</button>
+    </div>
+    <div class="win-body">
+      <ul class="rows">
+        <li><span class="r-title">SDG Open Hack</span><span class="r-date">2025</span></li>
+        <li><span class="r-title">Represented NYP at IMPACT WEEK</span><span class="r-date">2025</span></li>
+        <li><span class="r-title">Assistant Student Organiser</span><span class="r-date">2024</span><span class="r-org">SEG Mind Your Wellness</span></li>
+      </ul>
+    </div>
+  </section>
+
   <!-- ============ CONTACT (wall phone) ============ -->
-  <section class="win" id="win-contact" role="dialog" aria-labelledby="t-contact" tabindex="-1" style="--w:460px" hidden>
+  <section class="win" id="win-contact" role="dialog" aria-labelledby="t-contact" tabindex="-1" style="--w:460px;--c:#FF5FD2;--ct:#0B0C0E" hidden>
     <div class="win-bar" data-cursor="Drag">
       <h2 class="win-title" id="t-contact">Contact</h2>
-      <button class="win-close" aria-label="Close Contact" data-cursor="Close">×</button>
+      <button class="win-close" aria-label="Close Contact" data-cursor="Close">Back</button>
     </div>
     <div class="win-body">
       <ul class="contact">
@@ -480,9 +551,10 @@ html.has-cursor .cursor{display:block}
 </main>
 
 <div class="flash" id="flash" aria-live="polite"></div>
-<div class="cursor" id="cursor" aria-hidden="true"><span class="dot"></span><span class="lbl"></span></div>
+<div class="cursor" id="cursor" aria-hidden="true"><span class="g g-idle"></span><span class="g g-hot"></span><span class="lbl" hidden></span></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>
 (() => {
   'use strict';
@@ -494,7 +566,7 @@ html.has-cursor .cursor{display:block}
   const root = document.documentElement;
 
   const stage = $('#stage');
-  const hud = $('.hud');
+  const hud = $('.compass');
   const canvas = $('#scene');
   const tags = $$('.tag');
   const wins = $$('.win');
@@ -519,9 +591,9 @@ html.has-cursor .cursor{display:block}
       comp.threshold.value = -20; comp.ratio.value = 4;
       master = ctx.createGain(); master.gain.value = 0;
       master.connect(comp); comp.connect(ctx.destination);
-      loopBus = ctx.createGain(); loopBus.gain.value = 0.5; loopBus.connect(master);
-      sfxBus = ctx.createGain(); sfxBus.gain.value = 0.55; sfxBus.connect(master);
-      noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.5), ctx.sampleRate);
+      loopBus = ctx.createGain(); loopBus.gain.value = 0.72; loopBus.connect(master);
+      sfxBus = ctx.createGain(); sfxBus.gain.value = 0.68; sfxBus.connect(master);
+      noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 2), ctx.sampleRate);
       const d = noise.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       return true;
@@ -582,26 +654,70 @@ html.has-cursor .cursor{display:block}
       o.start(t); o.stop(t + dur + 0.02);
     }
 
-    const KICK = [0, 7, 10, 16, 23, 26];
-    const CLAP = [4, 12, 20, 28];
-    const BASS = { 0: 33, 3: 33, 6: 36, 10: 31, 11: 33, 14: 40, 16: 29, 19: 29, 22: 33, 26: 31, 28: 31, 30: 28 };
-    const LEAD = { 29: 64, 30: 67, 31: 69 };
-    function play(s, t) {
-      if (KICK.includes(s)) kick(t);
-      if (CLAP.includes(s)) hiss(t, { type: 'bandpass', f: 1600, q: 1.2, v: 0.32, dur: 0.14 });
-      hiss(t, { v: s % 4 === 2 ? 0.11 : 0.035, dur: s % 4 === 2 ? 0.06 : 0.03 });
-      if (BASS[s] !== undefined) bass(t, BASS[s], STEP * 2.2);
-      if (LEAD[s] !== undefined) tone(t, LEAD[s], { v: 0.045, dur: 0.1, bus: loopBus });
+    // A slow, uneasy ambience: distant traffic, a low drifting pad, now and then a far-off bell
+    const CHORDS = [[36, 37, 42], [34, 40, 41], [38, 39, 44], [33, 39, 40]];  // dissonant clusters: minor 2nds and tritones
+    let chordIx = 0;
+    function pad(t, notes) {
+      notes.forEach(m => {
+        [0, 7].forEach(det => {
+          const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+          o.type = 'triangle'; o.frequency.setValueAtTime(mtof(m) * (1 + det * 0.0009), t);
+          f.type = 'lowpass'; f.frequency.value = 520;
+          g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.05, t + 2.2); g.gain.linearRampToValueAtTime(0.0001, t + 7.5);
+          o.connect(f); f.connect(g); g.connect(loopBus); o.start(t); o.stop(t + 7.6);
+        });
+      });
+      if (Math.random() < 0.55) {
+        const bt = t + 1 + Math.random() * 4, o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = 'sine'; o.frequency.setValueAtTime(mtof(notes[Math.floor(Math.random() * 3)] + 36), bt);
+        g.gain.setValueAtTime(0.0001, bt); g.gain.exponentialRampToValueAtTime(0.03, bt + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, bt + 4);
+        o.connect(g); g.connect(loopBus); o.start(bt); o.stop(bt + 4.1);
+      }
+      kicks.push(t); if (kicks.length > 8) kicks.shift();
     }
-    function tick() {
-      while (next < ctx.currentTime + 0.12) { play(step % 32, next); next += STEP; step++; }
+    // distant city traffic: a low rumbling drone plus the occasional car passing outside the window
+    let trafficSrc = null, carTimer = null;
+    function scheduleCar() {
+      const delay = 9000 + Math.random() * 22000;
+      carTimer = setTimeout(() => { carPass(); scheduleCar(); }, delay);
+    }
+    function carPass() {
+      if (!on || !ctx) return;
+      const t = ctx.currentTime + 0.05;
+      const dur = 2.2 + Math.random() * 1.4;
+      const src = ctx.createBufferSource(); src.buffer = noise; src.loop = true;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.Q.value = 0.8;
+      bp.frequency.setValueAtTime(220, t);
+      bp.frequency.linearRampToValueAtTime(520, t + dur * 0.5);
+      bp.frequency.linearRampToValueAtTime(180, t + dur);
+      const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+      const dir = Math.random() < 0.5 ? -1 : 1;
+      if (pan) { pan.pan.setValueAtTime(-dir * 0.8, t); pan.pan.linearRampToValueAtTime(dir * 0.8, t + dur); }
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.linearRampToValueAtTime(0.05 + Math.random() * 0.03, t + dur * 0.35);
+      g.gain.linearRampToValueAtTime(0.0001, t + dur);
+      src.connect(bp); bp.connect(g);
+      if (pan) { g.connect(pan); pan.connect(loopBus); } else g.connect(loopBus);
+      src.start(t); src.stop(t + dur + 0.05);
     }
     function startLoop() {
       if (timer) return;
-      step = 0; next = ctx.currentTime + 0.08;
-      tick(); timer = setInterval(tick, 25);
+      trafficSrc = ctx.createBufferSource(); trafficSrc.buffer = noise; trafficSrc.loop = true;
+      const tlp = ctx.createBiquadFilter(); tlp.type = 'lowpass'; tlp.frequency.value = 260;
+      const thp = ctx.createBiquadFilter(); thp.type = 'highpass'; thp.frequency.value = 45;
+      const tg = ctx.createGain(); tg.gain.value = 0.06;
+      trafficSrc.connect(thp); thp.connect(tlp); tlp.connect(tg); tg.connect(loopBus); trafficSrc.start();
+      scheduleCar();
+
+      const beat = () => pad(ctx.currentTime + 0.1, CHORDS[chordIx++ % CHORDS.length]);
+      beat(); timer = setInterval(beat, 6000);
     }
-    function stopLoop() { clearInterval(timer); timer = null; }
+    function stopLoop() {
+      clearInterval(timer); timer = null;
+      clearTimeout(carTimer); carTimer = null;
+      if (trafficSrc) { try { trafficSrc.stop(); } catch (e) {} trafficSrc = null; }
+    }
 
     function set(v) {
       if (v && !init()) { on = false; return false; }
@@ -609,7 +725,7 @@ html.has-cursor .cursor{display:block}
       if (!ctx) return on;
       const t = ctx.currentTime;
       master.gain.cancelScheduledValues(t);
-      master.gain.setTargetAtTime(on ? 0.75 : 0, t, 0.06);
+      master.gain.setTargetAtTime(on ? 0.95 : 0, t, 0.06);
       if (on) { if (ctx.resume) ctx.resume(); startLoop(); }
       else setTimeout(() => { if (!on) stopLoop(); }, 350);
       return on;
@@ -631,7 +747,32 @@ html.has-cursor .cursor{display:block}
           break;
         }
         case 'boot': [57, 60, 64, 69].forEach((m, i) => tone(t + i * 0.07, m + 12, { v: 0.06, dur: 0.12 })); break;
+        case 'examine': {
+          slide(t, 950, 80, { type: 'sawtooth', v: 0.2, dur: 0.55, band: 500 });
+          hiss(t, { type: 'lowpass', f: 2200, q: 0.6, v: 0.14, dur: 0.5 });
+          const o = ctx.createOscillator(), g = ctx.createGain();
+          o.type = 'sine'; o.frequency.setValueAtTime(52, t + 0.08);
+          g.gain.setValueAtTime(0.0001, t + 0.08); g.gain.exponentialRampToValueAtTime(0.4, t + 0.18); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+          o.connect(g); g.connect(sfxBus); o.start(t + 0.08); o.stop(t + 0.7);
+          break;
+        }
         case 'granted': [69, 72, 76, 81, 84, 88].forEach((m, i) => tone(t + i * 0.05, m, { v: 0.06, dur: 0.08 })); break;
+        case 'meow': {
+          slide(t, 520, 760, { type: 'sawtooth', v: 0.22, dur: 0.13, band: 1400 });
+          slide(t + 0.12, 760, 340, { type: 'sawtooth', v: 0.2, dur: 0.22, band: 1200 });
+          break;
+        }
+        case 'purr': {
+          const src = ctx.createBufferSource(); src.buffer = noise; src.loop = true;
+          const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 280;
+          const g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
+          lfo.frequency.value = 23; lg.gain.value = 0.1;
+          g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.2, t + 0.2); g.gain.linearRampToValueAtTime(0.0001, t + 2.4);
+          lfo.connect(lg); lg.connect(g.gain);
+          src.connect(f); f.connect(g); g.connect(sfxBus);
+          src.start(t); lfo.start(t); src.stop(t + 2.5); lfo.stop(t + 2.5);
+          break;
+        }
       }
     }
     function pulse() {
@@ -651,9 +792,16 @@ html.has-cursor .cursor{display:block}
   const soundBtn = $('#soundBtn'), soundLbl = $('#soundLbl');
   function syncSound(v) {
     soundBtn.setAttribute('aria-pressed', v ? 'true' : 'false');
+    soundBtn.setAttribute('aria-label', v ? 'Sound on' : 'Sound off');
     soundLbl.textContent = v ? 'Sound on' : 'Sound off';
   }
   soundBtn.addEventListener('click', () => syncSound(Sound.set(!Sound.on)));
+  try {                                   // camcorder-style date stamp, Singapore time
+    const vt = $('#vhsTime');
+    const vf = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Singapore', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+    const tickV = () => { vt.textContent = vf.format(new Date()).replace(',', '').toUpperCase(); };
+    tickV(); setInterval(tickV, 1000);
+  } catch (e) {}
 
   /* =================== STAMPS =================== */
   const stampLayer = $('#stamps');
@@ -674,12 +822,23 @@ html.has-cursor .cursor{display:block}
 
   /* =================== CURSOR =================== */
   const cur = $('#cursor'), curLbl = $('.lbl', cur);
-  let curLabel = null, overCanvas = false;
-  function setCursorLabel(label) {
-    if (label === curLabel) return;
-    curLabel = label;
-    curLbl.textContent = label;
-    cur.classList.toggle('big', !!label);
+  let curKey = '', overCanvas = false;
+  // A cartoon glove: white while exploring, yellow over anything you can click
+  const glove = fill => 'url("data:image/svg+xml,' + encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'><g stroke='#2A2233' stroke-width='2.2' stroke-linejoin='round' stroke-linecap='round'>` +
+    `<rect x='12.5' y='27' width='15' height='9' rx='2.5' fill='${fill}'/>` +
+    `<path fill='${fill}' d='M13.5 28 C9.5 26 8.2 21 10.2 17.8 L12 15.6 L12 5.5 C12 2 17 2 17 5.5 L17 14.4 C18.8 12.6 21.8 12.8 22.8 14.8 C24.6 13.3 27.6 13.9 28.2 16.2 C30.4 15.6 32.8 17.2 32.2 20.2 L30.8 25.6 C30.1 27.8 28.4 29 26.4 29 Z'/>` +
+    `<path fill='none' stroke-width='1.6' d='M17 14.4 L17 20 M22.8 14.8 L22.8 19.4 M28.2 16.2 L28.2 20 M14 32.2 L26.4 32.2'/></g></svg>`) + '")';
+  $('.g-idle', cur).style.backgroundImage = glove('#FFFDF6');
+  $('.g-hot', cur).style.backgroundImage = glove('#FFE14A');
+  function setCursor(hot, text, grab) {
+    const key = (hot ? 1 : 0) + '|' + (text || '') + '|' + (grab ? 1 : 0);
+    if (key === curKey) return;
+    curKey = key;
+    cur.classList.toggle('hot', !!hot);
+    cur.classList.toggle('grab', !!grab);
+    curLbl.textContent = text || '';
+    curLbl.hidden = !text;
   }
 
   /* =================== 3D ROOM =================== */
@@ -703,98 +862,129 @@ html.has-cursor .cursor{display:block}
     renderer.setPixelRatio(DPR);
     renderer.setSize(innerWidth, innerHeight, false);
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = T.BasicShadowMap;   // hard-edged, flat shadows
+    renderer.shadowMap.type = T.PCFShadowMap;   // crisp but clean shadow edges
     renderer.shadowMap.autoUpdate = false;         // updated once per frame, not per pass
     const isGL2 = !!renderer.capabilities.isWebGL2;
 
     const scene = new T.Scene();
     const camera = new T.PerspectiveCamera(90, 1, 0.05, 60);
     camera.rotation.order = 'YXZ';
-    const EYE = new T.Vector3(0, 2.8, 1.2);
+    const EYE = new T.Vector3(0.2, 2.3, -1.6);
     camera.position.copy(EYE);
 
     let seed = 11;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     // Three flat tones per colour: the cel-shaded, drawn look
-    const grad = new T.DataTexture(new Uint8Array([120, 120, 120, 255, 190, 190, 190, 255, 255, 255, 255, 255]), 3, 1, T.RGBAFormat);
+    const grad = new T.DataTexture(new Uint8Array([188, 188, 188, 255, 226, 226, 226, 255, 255, 255, 255, 255]), 3, 1, T.RGBAFormat);
     grad.minFilter = grad.magFilter = T.NearestFilter; grad.generateMipmaps = false; grad.needsUpdate = true;
-    const std = o => new T.MeshToonMaterial(Object.assign({ gradientMap: grad }, o || {}));
+    // Old-console look: vertex-lit materials whose corners snap to a coarse pixel grid, so edges shimmer as you turn
+    const SNAP = { value: new T.Vector2(160, 120) };
+    const SNAP_GLSL = '\n  gl_Position.xy = floor(gl_Position.xy / gl_Position.w * snapRes + 0.5) / snapRes * gl_Position.w;';
+    const retro = m => {
+      m.onBeforeCompile = sh => {
+        sh.uniforms.snapRes = SNAP;
+        sh.vertexShader = 'uniform vec2 snapRes;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>' + SNAP_GLSL);
+      };
+      return m;
+    };
+    const std = o => retro(new T.MeshLambertMaterial(o || {}));
     const mkCanvas = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
     const setFont = (x, spec, stretch) => { try { x.fontStretch = stretch || 'normal'; } catch (e) {} x.font = spec; };
 
     /* ---------- Two passes: colour, then normals + depth for the ink lines ---------- */
     let rt = null, nrt = null, rtW = 2, rtH = 2;
     function sizeRT() {
-      const bw = Math.floor(innerWidth * DPR), bh = Math.floor(innerHeight * DPR);
-      const s = Math.min(1.6, 2800 / Math.max(bw, bh));
-      rtW = Math.max(2, Math.floor(bw * s)); rtH = Math.max(2, Math.floor(bh * s));
+      // render at roughly old-console resolution and scale up with hard pixels
+      rtH = Math.round(clamp(innerHeight * 0.58, 340, 520));
+      rtW = Math.max(2, Math.round(rtH * innerWidth / Math.max(1, innerHeight)));
       if (rt) rt.setSize(rtW, rtH);
-      else {
-        rt = (isGL2 && T.WebGLMultisampleRenderTarget) ? new T.WebGLMultisampleRenderTarget(rtW, rtH) : new T.WebGLRenderTarget(rtW, rtH);
-        if ('samples' in rt) rt.samples = 4;
-      }
+      else { rt = new T.WebGLRenderTarget(rtW, rtH); rt.texture.minFilter = rt.texture.magFilter = T.NearestFilter; rt.texture.generateMipmaps = false; }
       if (nrt) nrt.dispose();
       nrt = new T.WebGLRenderTarget(rtW, rtH);
-      nrt.texture.minFilter = nrt.texture.magFilter = T.NearestFilter;
-      nrt.depthTexture = new T.DepthTexture(rtW, rtH);
-      nrt.depthTexture.type = T.UnsignedIntType;
+      nrt.texture.minFilter = nrt.texture.magFilter = T.LinearFilter;
+      SNAP.value.set(rtW * 0.25, rtH * 0.25);
     }
     sizeRT();
-    const normalMat = new T.MeshNormalMaterial();
+    // Outline pass: view-space normal in RGB and a per-object id in alpha.
+    // Lines are drawn wherever either changes, so every object gets a clean edge.
+    const normalMat = new T.ShaderMaterial({
+      uniforms: { oid: { value: 0 }, snapRes: SNAP },
+      vertexShader: 'uniform vec2 snapRes; varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);' + SNAP_GLSL + ' }',
+      fragmentShader: 'uniform float oid; varying vec3 vN; void main(){ vec3 n = normalize(vN) * (gl_FrontFacing ? 1.0 : -1.0); gl_FragColor = vec4(n * 0.5 + 0.5, oid); }',
+      side: T.DoubleSide
+    });
+    function setOid() {
+      if (scene.overrideMaterial === normalMat) { normalMat.uniforms.oid.value = this.userData.hov ? 1.0 : (this.userData.oid || 0); normalMat.uniformsNeedUpdate = true; }
+    }
 
     const post = new T.ShaderMaterial({
       uniforms: {
         tDiffuse: { value: null }, tNormal: { value: null }, tDepth: { value: null },
         aspect: { value: 1 }, k: { value: 1 }, tanX: { value: 1 }, tanY: { value: 1 },
-        ca: { value: 0.004 }, vig: { value: 0.25 }, grain: { value: 0.03 }, time: { value: 0 },
-        edge: { value: new T.Color(0x000000) }, ink: { value: new T.Color(0x0B1250) },
-        texel: { value: new T.Vector2(1, 1) }, lineW: { value: 1.5 }, boil: { value: 1 },
+        ca: { value: 0 }, vig: { value: 0.56 }, grain: { value: 0.055 }, time: { value: 0 },
+        edge: { value: new T.Color(0x000000) }, ink: { value: new T.Color(0x0B1250) }, glowCol: { value: new T.Color(0xE8DCB0) }, sat: { value: 0.52 }, gam: { value: 1.04 }, lift: { value: 0.04 }, tint: { value: new T.Vector3(0.96, 1.0, 1.02) }, scan: { value: 0.03 }, vhs: { value: 1 }, inkAmt: { value: 0 },
+        texel: { value: new T.Vector2(1, 1) }, lineW: { value: 1.5 }, boil: { value: 1 }, px: { value: 0.002 }, tanC: { value: 1 }, rcN: { value: 1 }, fishMix: { value: 0.94 },
         cn: { value: camera.near }, cf: { value: camera.far }
       },
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
       fragmentShader: [
         'uniform sampler2D tDiffuse; uniform sampler2D tNormal; uniform sampler2D tDepth;',
-        'uniform float aspect, k, tanX, tanY, ca, vig, grain, time, lineW, boil, cn, cf;',
-        'uniform vec2 texel; uniform vec3 edge; uniform vec3 ink;',
+        'uniform float aspect, k, tanX, tanY, ca, vig, grain, time, lineW, boil, cn, cf, px, tanC, rcN, fishMix;',
+        'uniform vec2 texel; uniform vec3 edge; uniform vec3 ink; uniform vec3 glowCol; uniform vec3 tint;',
+        'uniform float sat, gam, lift, scan, vhs, inkAmt;',
+        'float bayer2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }',
+        'float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }',
         'varying vec2 vUv;',
         'float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }',
         'vec2 lens(vec2 p, float kk){',
         '  float r = length(p); float th = r * kk;',
         '  if (th > 1.55) return vec2(-1.0);',
         '  vec2 d = r > 1e-5 ? p / r : vec2(0.0);',
-        '  float t = tan(th);',
+        '  float t = mix(r * tanC / rcN, tan(th), fishMix);',
         '  return vec2(d.x * t / tanX, d.y * t / tanY) * 0.5 + 0.5;',
         '}',
-        'float iz(vec2 uv){',
-        '  float z = texture2D(tDepth, uv).r * 2.0 - 1.0;',
-        '  return (cf + cn - z * (cf - cn)) / (2.0 * cn * cf);',   // 1 / linear depth: flat on planes
+        'float inkAt(vec2 uv, vec2 ox, vec2 oy){',
+        '  vec4 c = texture2D(tNormal, uv);',
+        '  vec4 a = texture2D(tNormal, uv + ox), b = texture2D(tNormal, uv - ox);',
+        '  vec4 e = texture2D(tNormal, uv + oy), f = texture2D(tNormal, uv - oy);',
+        '  float en = max(max(distance(a.rgb, c.rgb), distance(b.rgb, c.rgb)), max(distance(e.rgb, c.rgb), distance(f.rgb, c.rgb)));',
+        '  float ei = max(max(abs(a.a - c.a), abs(b.a - c.a)), max(abs(e.a - c.a), abs(f.a - c.a)));',
+        '  return max(smoothstep(0.16, 0.34, en), smoothstep(0.006, 0.03, ei));',
         '}',
-        'float inkAt(vec2 uv){',
-        '  vec2 ox = vec2(texel.x * lineW, 0.0), oy = vec2(0.0, texel.y * lineW);',
-        '  vec3 n0 = texture2D(tNormal, uv).rgb;',
-        '  float en = max(max(distance(texture2D(tNormal, uv + ox).rgb, n0), distance(texture2D(tNormal, uv - ox).rgb, n0)),',
-        '                 max(distance(texture2D(tNormal, uv + oy).rgb, n0), distance(texture2D(tNormal, uv - oy).rgb, n0)));',
-        '  float z0 = iz(uv);',
-        '  float ez = (abs(iz(uv + ox) + iz(uv - ox) - 2.0 * z0) + abs(iz(uv + oy) + iz(uv - oy) - 2.0 * z0)) / max(z0, 1e-4);',
-        '  return max(smoothstep(0.2, 0.36, en), smoothstep(0.008, 0.03, ez));',
-        '}',
+        'float hv(vec2 uv){ return smoothstep(0.965, 0.99, texture2D(tNormal, uv).a); }',
         'void main(){',
         '  vec2 p = (vUv * 2.0 - 1.0) * vec2(aspect, 1.0);',
+        '  float row = floor(vUv.y * 180.0);',
+        '  p.x += (hash(vec2(row, floor(time * 10.0))) - 0.5) * 0.004 * vhs * step(0.975, hash(vec2(floor(time * 3.0), floor(row / 12.0))));',
         '  vec2 g = lens(p, k);',
         '  vec3 col;',
         '  if (g.x < 0.0 || g.x > 1.0 || g.y < 0.0 || g.y > 1.0) { col = edge; }',
         '  else {',
-        '    float e = dot(p, p) / (aspect * aspect + 1.0);',
-        '    vec2 r = clamp(lens(p, k * (1.0 - ca * e)), 0.0, 1.0);',
-        '    vec2 b = clamp(lens(p, k * (1.0 + ca * e)), 0.0, 1.0);',
+        '    vec2 r = clamp(lens(p + vec2(0.0018 * vhs, 0.0), k), 0.0, 1.0);',
+        '    vec2 b = clamp(lens(p - vec2(0.0012 * vhs, 0.0), k), 0.0, 1.0);',
         '    col = vec3(texture2D(tDiffuse, r).r, texture2D(tDiffuse, g).g, texture2D(tDiffuse, b).b);',
-        '    vec2 cell = floor(vUv * 22.0) + floor(time * 7.0) * 13.1;',   // hand-drawn line "boil"
-        '    vec2 j = (vec2(hash(cell), hash(cell + 7.3)) - 0.5) * texel * boil;',
-        '    col = mix(col, ink, inkAt(g + j));',
+        '    vec2 dx = vec2(px, 0.0), dy = vec2(0.0, px);',
+        '    vec2 ox = (lens(p + dx, k) - lens(p - dx, k)) * 0.5;',
+        '    vec2 oy = (lens(p + dy, k) - lens(p - dy, k)) * 0.5;',
+        '    col = mix(col, ink, inkAt(g, ox, oy) * inkAmt);',
+        '    float h0 = hv(g), ring = 0.0;',
+        '    for (int i = 0; i < 16; i++) {',
+        '      float a = float(i) * 0.3927;',
+        '      vec2 o = cos(a) * ox + sin(a) * oy;',
+        '      ring = max(ring, max(hv(g + o * 4.5), 0.7 * hv(g + o * 8.0)));',
+        '    }',
+        '    col = mix(col, glowCol, ring * (1.0 - h0) * 0.6);',
+        '    col = mix(col, glowCol, h0 * 0.08);',
         '  }',
+        '  float l = dot(col, vec3(0.299, 0.587, 0.114));',
+        '  col = mix(vec3(l), col, sat) * tint;',
+        '  col = pow(max(col, 0.0), vec3(gam));',
+        '  col = lift + col * (1.0 - lift);',
         '  float rc = length(p) / length(vec2(aspect, 1.0));',
-        '  col *= 1.0 - vig * smoothstep(0.55, 1.05, rc);',
-        '  col += (hash(floor(vUv * vec2(900.0, 700.0))) - 0.5) * grain;',     // fixed paper tooth
+        '  col *= 1.0 - vig * smoothstep(0.3, 1.05, rc);',
+        '  col += (hash(vUv * 731.0 + fract(time * 7.13) * 91.0) - 0.5) * grain;',
+        '  col *= 1.0 - scan * step(0.5, fract(gl_FragCoord.y * 0.25));',
+        '  col = floor(col * 63.0 + bayer4(floor(gl_FragCoord.xy / 2.0))) / 63.0;',
         '  gl_FragColor = vec4(col, 1.0);',
         '}'
       ].join('\n'),
@@ -807,8 +997,9 @@ html.has-cursor .cursor{display:block}
 
     const aspect = () => innerWidth / Math.max(1, innerHeight);
     const narrow = () => innerWidth < 640;
-    const LENS_MIN = rad(24), LENS_MAX = rad(76);
-    let userLens = rad(narrow() ? 70 : 68);
+    const LENS_MIN = rad(24), LENS_MAX = rad(84);
+    const LINE_PX = 0.7;   // half-width of the ink lines, in screen pixels
+    let userLens = rad(narrow() ? 80 : 78);
     let lensC = rad(76), lensGoal = userLens;
     let K = 1, TX = 1, TY = 1;
     function updateLens() {
@@ -821,43 +1012,37 @@ html.has-cursor .cursor{display:block}
       camera.updateProjectionMatrix();
       const u = post.uniforms;
       u.aspect.value = a; u.k.value = K; u.tanX.value = TX; u.tanY.value = TY;
+      u.tanC.value = Math.tan(lensC); u.rcN.value = rc;
       u.texel.value.set(1 / rtW, 1 / rtH);
-      u.lineW.value = Math.max(1.0, (narrow() ? 1.1 : 1.4) * rtW / (innerWidth * DPR));
+      u.px.value = LINE_PX * 2 / Math.max(1, innerHeight);   // same line width at every zoom level
     }
 
-    /* ---------- Textures ---------- */
-    const checkerC = mkCanvas(64, 64);
-    { const x = checkerC.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 64, 64); x.fillStyle = '#d6dcf5'; x.fillRect(0, 0, 32, 32); x.fillRect(32, 32, 32, 32); }
-    const checkerT = new T.CanvasTexture(checkerC);
-    checkerT.wrapS = checkerT.wrapT = T.RepeatWrapping;
-    checkerT.repeat.set(5, 5);
-    checkerT.magFilter = T.NearestFilter;
-    checkerT.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
-    // (material names kept from earlier versions: "yellow" is now the main accent blue)
-    const M = {
-      wall: std(), ceil: std(), floor: std({ map: checkerT }), furn: std(), furn2: std(),
-      bone: std(), yellow: std(), yellowFlat: std(), yellow2: std({ side: T.DoubleSide }),
-      leaf: std(), edge: std(), metal: std(),
-      ledOn: new T.MeshBasicMaterial({ color: 0x9DB4FF }), ledOff: new T.MeshBasicMaterial({ color: 0x1a2366 }),
-      ink: new T.MeshBasicMaterial({ color: 0x0B1250 }),
-      bulb: new T.MeshBasicMaterial({ color: 0xF2F5FF }), bulb2: new T.MeshBasicMaterial({ color: 0xF2F5FF })
-    };
-
-    const PAL = {
-      day: {
-        bg: 0xF1F3FF, wall: 0xB4C4FF, ceil: 0xE4EAFF, floor: 0x3552F0, furn: 0x1A2584, furn2: 0x3C4AB0, bone: 0xF7F8FF,
-        leaf: 0x2A3FC8, acc: 0x2F4BFF, acc2: 0x7C97FF, band: 0x2339E6, metal: 0xB9C6F2, ink: 0x0B1250,
-        amb: 0.5, dir: 0.42, side: 0.1, ceilL: 0.22, lamp: 0.3, lampC: 0xE6ECFF, glow: 0.2, ember: 0x000000, vig: 0.22
-      },
-      night: {
-        bg: 0x060A2A, wall: 0x223080, ceil: 0x161E5C, floor: 0x14207E, furn: 0x0E1552, furn2: 0x283599, bone: 0xBFCBFF,
-        leaf: 0x1F2F9C, acc: 0x4563FF, acc2: 0x7089FF, band: 0x6D86FF, metal: 0x8FA0E0, ink: 0x02040F,
-        amb: 0.38, dir: 0.22, side: 0.06, ceilL: 0.3, lamp: 1.05, lampC: 0xD6E0FF, glow: 0.9, ember: 0x0A1466, vig: 0.42
+    const BX = (w, h, d) => new T.BoxGeometry(w, h, d);
+    // Soft, slightly hand-made boxes: rounded edges, a gentle wobble, and smooth normals so they shade like drawn shapes
+    function softBox(w, h, d) {
+      w = Math.max(w, 1e-4); h = Math.max(h, 1e-4); d = Math.max(d, 1e-4);
+      const r = Math.min(0.09, Math.min(w, h, d) * 0.24);
+      const g = new T.BoxGeometry(w, h, d, 4, 4, 4);
+      const pos = g.attributes.position, nor = g.attributes.normal;
+      const v = new T.Vector3(), c = new T.Vector3(), n = new T.Vector3(), o = new T.Vector3();
+      const hx = Math.max(0, w / 2 - r), hy = Math.max(0, h / 2 - r), hz = Math.max(0, d / 2 - r);
+      const wob = Math.min(0.012, Math.min(w, h, d) * 0.04);
+      for (let i = 0; i < pos.count; i++) {
+        v.fromBufferAttribute(pos, i);
+        c.set(clamp(v.x, -hx, hx), clamp(v.y, -hy, hy), clamp(v.z, -hz, hz));
+        n.subVectors(v, c);
+        if (n.lengthSq() < 1e-10) n.fromBufferAttribute(nor, i);
+        n.normalize();
+        v.copy(c).addScaledVector(n, r);
+        // wobble only along the surface, never in or out of it, so flat faces stay put and nothing pokes through
+        o.set(Math.sin(v.y * 9.1 + v.z * 5.3), Math.sin(v.x * 7.7 + v.z * 4.1) * 0.6, Math.sin(v.x * 6.3 + v.y * 8.9)).multiplyScalar(wob);
+        o.addScaledVector(n, -o.dot(n));
+        v.add(o);
+        pos.setXYZ(i, v.x, v.y, v.z); nor.setXYZ(i, n.x, n.y, n.z);
       }
-    };
-
-    const B = (w, h, d) => new T.BoxGeometry(w, h, d);
+      return g;
+    }
+    const B = softBox;
     const C = (rt_, rb, h, s, open) => new T.CylinderGeometry(rt_, rb, h, s || 24, 1, !!open);
     const S = (r, ws, hs) => new T.SphereGeometry(r, ws || 16, hs || 12);
     function mesh(geo, mat, x, y, z, parent) {
@@ -871,577 +1056,237 @@ html.has-cursor .cursor{display:block}
       const g = new T.Group(); g.position.set(x, y, z); (parent || scene).add(g); return g;
     }
     const flat = m => { m.castShadow = false; return m; };
+    const section = (g, id, label) => { g.userData = { id, kind: 'section', label }; return g; };
+    const action = (g, id, label) => { g.userData = { id, kind: 'action', label }; return g; };
 
-    /* ---------- The room: four walls, floor, ceiling ---------- */
-    const RW = 8, RH = 7;   // 16 × 16 floor, taller ceiling
-    flat(mesh(B(RW * 2 + 0.6, 0.3, RW * 2 + 0.6), M.floor, 0, -0.15, 0));
-    flat(mesh(B(RW * 2 + 0.6, 0.3, RW * 2 + 0.6), M.ceil, 0, RH + 0.15, 0));
-    flat(mesh(B(RW * 2 + 0.6, RH, 0.3), M.wall, 0, RH / 2, -RW - 0.15));
-    flat(mesh(B(RW * 2 + 0.6, RH, 0.3), M.wall, 0, RH / 2, RW + 0.15));
-    flat(mesh(B(0.3, RH, RW * 2), M.wall, -RW - 0.15, RH / 2, 0));
-    flat(mesh(B(0.3, RH, RW * 2), M.wall, RW + 0.15, RH / 2, 0));
-    // skirting, a yellow band that wraps the room (it shows off the lens bend), and a ceiling trim
-    // skirting, a blue band that wraps the room (it shows off the lens bend), and a ceiling trim
-    const trims = [[0.18, 0.09, 0.1, M.furn2], [0.28, 2.05, 0.16, M.edge], [0.12, RH - 0.06, 0.12, M.edge]];
-    trims.forEach(([h, y, d, m]) => {
-      [-1, 1].forEach(sd => {
-        flat(mesh(B(RW * 2, h, d), m, 0, y, sd * (RW - d / 2)));
-        flat(mesh(B(d, h, RW * 2 - 2 * d), m, sd * (RW - d / 2), y, 0));
-      });
-    });
+    /* ---------- The room: an atmospheric loft, loaded from Blender ---------- */
+    scene.background = new T.Color(0x0e1219);
+    scene.fog = new T.FogExp2(0x0e1219, 0.21);
 
-    /* ---------- Rug under your feet ---------- */
-    const rug = group(0, 0, -0.5);
-    [[3.6, M.bone, 0.04], [2.7, M.yellow, 0.07], [1.6, M.furn, 0.1]].forEach(([r, m, h]) => flat(mesh(C(r, r, h, 48), m, 0, h / 2, 0, rug)));
-
-    /* ---------- North wall: desk, monitor, poster, duck, chair, speaker ---------- */
-    const desk = group(0, 0, -RW + 0.9);
-    mesh(B(3.6, 0.12, 1.5), M.furn, 0, 1.5, 0, desk);
-    [[-1.7, -0.65], [-1.7, 0.65], [1.7, -0.65], [1.7, 0.65]].forEach(([lx, lz]) => mesh(B(0.1, 1.44, 0.1), M.furn, lx, 0.72, lz, desk));
-    mesh(B(0.9, 1.0, 1.3), M.furn2, 1.1, 0.62, 0, desk);
-    mesh(B(0.3, 0.04, 0.02), M.bone, 1.1, 0.85, 0.66, desk);
-    mesh(B(0.3, 0.04, 0.02), M.bone, 1.1, 0.45, 0.66, desk);
-    mesh(B(1.3, 0.05, 0.4), M.furn2, -0.1, 1.585, 0.35, desk);
-    mesh(B(0.16, 0.04, 0.24), M.furn2, 0.8, 1.58, 0.38, desk);
-    mesh(C(0.12, 0.11, 0.26, 16), M.yellow, 1.45, 1.69, 0.3, desk);
-
-    const monitor = group(0, 1.56, -RW + 0.55);
-    mesh(B(0.62, 0.04, 0.36), M.furn2, 0, 0.02, 0.05, monitor);
-    mesh(B(0.09, 0.55, 0.09), M.furn2, 0, 0.3, -0.02, monitor);
-    mesh(B(2.0, 1.2, 0.1), M.furn, 0, 1.12, 0, monitor);
-    const screenC = mkCanvas(512, 296);
-    const screenT = new T.CanvasTexture(screenC);
-    const screen = new T.Mesh(new T.PlaneGeometry(1.86, 1.07), new T.MeshBasicMaterial({ map: screenT }));
-    screen.position.set(0, 1.12, 0.052); monitor.add(screen);
-    monitor.userData = { id: 'work', kind: 'section', label: 'Open' };
-
-    const duck = group(-1.15, 1.56, -RW + 1.25);
-    duck.rotation.y = Math.atan2(-(EYE.z - duck.position.z), EYE.x - duck.position.x);
-    const dBody = mesh(S(0.2, 12, 9), M.yellowFlat, 0, 0.14, 0, duck); dBody.scale.set(1.25, 0.8, 1);
-    mesh(S(0.13, 10, 8), M.yellowFlat, 0.15, 0.34, 0, duck);
-    mesh(B(0.11, 0.05, 0.1), M.furn, 0.29, 0.32, 0, duck);
-    mesh(S(0.022, 6, 5), M.ink, 0.23, 0.39, 0.07, duck);
-    mesh(S(0.022, 6, 5), M.ink, 0.23, 0.39, -0.07, duck);
-    const tail = mesh(new T.ConeGeometry(0.07, 0.15, 6), M.yellowFlat, -0.25, 0.24, 0, duck); tail.rotation.z = 0.9;
-    duck.userData = { id: 'duck', kind: 'action', label: 'Quack' };
-
-    const chair = group(0.9, 0, -RW + 2.2);
-    chair.rotation.y = -0.45;
-    mesh(C(0.5, 0.5, 0.06, 20), M.furn2, 0, 0.05, 0, chair);
-    mesh(C(0.06, 0.06, 0.88, 10), M.furn2, 0, 0.5, 0, chair);
-    mesh(B(1.0, 0.16, 0.95), M.furn, 0, 1.0, 0, chair);
-    mesh(B(0.08, 0.5, 0.08), M.furn2, 0, 1.25, 0.44, chair);
-    mesh(B(1.0, 0.95, 0.12), M.yellow, 0, 1.75, 0.44, chair);
-    chair.userData = { id: 'chair', kind: 'action', label: 'Spin' };
-
-    const poster = group(0, 4.8, -RW + 0.03);
-    const posterC = mkCanvas(1024, 360);
-    const posterT = new T.CanvasTexture(posterC);
-    const pMesh = new T.Mesh(new T.PlaneGeometry(3.7, 1.3), new T.MeshBasicMaterial({ map: posterT }));
-    pMesh.position.z = 0.02; poster.add(pMesh);
-    poster.userData = { id: 'poster', kind: 'action', label: 'Hello' };
-
-    const spk = group(-2.9, 0, -RW + 0.65);
-    mesh(B(1.6, 0.9, 0.55), M.furn, 0, 0.45, 0, spk);
-    const cones = [];
-    [-0.48, 0.48].forEach(sx => {
-      const ring = mesh(C(0.32, 0.32, 0.04, 28), M.furn2, sx, 0.45, 0.285, spk); ring.rotation.x = Math.PI / 2;
-      const cone = mesh(C(0.22, 0.08, 0.08, 24), M.bone, sx, 0.45, 0.3, spk); cone.rotation.x = Math.PI / 2;
-      cones.push(cone);
-    });
-    mesh(B(0.34, 0.2, 0.02), M.yellow, 0, 0.62, 0.285, spk);
-    mesh(new T.TorusGeometry(0.5, 0.035, 8, 24, Math.PI), M.furn2, 0, 0.9, 0, spk);
-    spk.userData = { id: 'speaker', kind: 'action', label: 'Sound' };
-
-    const lamp = group(-RW + 0.7, 0, -RW + 0.7);
-    mesh(C(0.38, 0.42, 0.08, 24), M.furn, 0, 0.04, 0, lamp);
-    mesh(C(0.04, 0.04, 3.6, 8), M.furn, 0, 1.84, 0, lamp);
-    mesh(C(0.28, 0.6, 0.62, 24, true), M.yellow2, 0, 3.85, 0, lamp);
-    flat(mesh(S(0.14, 12, 10), M.bulb, 0, 3.68, 0, lamp));
-    lamp.userData = { id: 'lamp', kind: 'action', label: 'Lamp' };
-
-    /* ---------- East wall: window, server rack, plant ---------- */
-    const win = group(RW - 0.03, 3.9, -1.0);
-    win.rotation.y = -Math.PI / 2;
-    win.scale.set(1.3, 1.3, 1);
-    const skyC = mkCanvas(512, 352);
-    const skyT = new T.CanvasTexture(skyC);
-    const glass = new T.Mesh(new T.PlaneGeometry(3.2, 2.2), new T.MeshBasicMaterial({ map: skyT }));
-    glass.position.z = 0.01; win.add(glass);
-    [[0, 1.16, 3.44, 0.12], [0, -1.16, 3.44, 0.12], [-1.66, 0, 0.12, 2.44], [1.66, 0, 0.12, 2.44], [0, 0, 0.07, 2.2], [0, 0.25, 3.2, 0.07]].forEach(([x, y, w, h]) => mesh(B(w, h, 0.1), M.furn, x, y, 0.05, win));
-    mesh(B(3.6, 0.1, 0.35), M.bone, 0, -1.25, 0.16, win);
-
-    const rack = group(RW - 0.75, 0, 4.8);
-    rack.rotation.y = -Math.PI / 2;
-    mesh(B(0.95, 2.3, 1.0), M.furn, 0, 1.15, 0, rack);
-    const leds = [];
-    for (let i = 0; i < 7; i++) {
-      const y = 0.3 + i * 0.28;
-      mesh(B(0.85, 0.22, 0.04), M.furn2, 0, y, 0.51, rack);
-      mesh(B(0.3, 0.03, 0.01), M.ink, 0.2, y, 0.535, rack);
-      for (let j = 0; j < 3; j++) {
-        const l = new T.Mesh(B(0.05, 0.05, 0.02), rnd() < 0.5 ? M.ledOn : M.ledOff);
-        l.position.set(-0.32 + j * 0.09, y, 0.54); rack.add(l); leds.push(l);
-      }
-    }
-    const lock = group(0, 2.3, 0.05, rack);
-    mesh(B(0.5, 0.42, 0.16), M.yellow, 0, 0.21, 0, lock);
-    const shackle = mesh(new T.TorusGeometry(0.15, 0.04, 10, 24, Math.PI), M.metal, 0, 0.42, 0, lock);
-    const keyhole = mesh(C(0.04, 0.04, 0.02, 12), M.ink, 0, 0.23, 0.085, lock); keyhole.rotation.x = Math.PI / 2;
-    mesh(B(0.025, 0.08, 0.02), M.ink, 0, 0.16, 0.085, lock);
-    rack.userData = { id: 'rack', kind: 'action', label: 'Unlock' };
-
-    const plant = group(RW - 0.8, 0, -RW + 0.8);
-    mesh(C(0.42, 0.3, 0.75, 20), M.bone, 0, 0.375, 0, plant);
-    mesh(C(0.38, 0.38, 0.04, 20), M.furn, 0, 0.73, 0, plant);
-    for (let i = 0; i < 9; i++) {
-      const h = 1.0 + rnd() * 0.9;
-      const holder = group(0, 0.72, 0, plant);
-      holder.rotation.y = i * 2.4;
-      holder.rotation.z = 0.1 + rnd() * 0.35;
-      mesh(new T.ConeGeometry(0.09, h, 4), M.leaf, 0, h / 2, 0, holder);
-    }
-    plant.userData = { id: 'plant', kind: 'action', label: 'Boop' };
-
-    /* ---------- South wall (behind you): door, light switch, phone, clock ---------- */
-    const door = group(2.5, 0, RW - 0.2);
-    door.rotation.y = Math.PI;
-    mesh(B(1.9, 4.0, 0.08), M.furn2, 0, 2.0, 0.04, door);
-    mesh(B(0.12, 4.12, 0.12), M.furn, -1.01, 2.06, 0.06, door);
-    mesh(B(0.12, 4.12, 0.12), M.furn, 1.01, 2.06, 0.06, door);
-    mesh(B(2.14, 0.12, 0.12), M.furn, 0, 4.12, 0.06, door);
-    const knob = mesh(C(0.07, 0.07, 0.14, 14), M.yellow, 0.7, 1.9, 0.14, door); knob.rotation.x = Math.PI / 2;
-    const signC = mkCanvas(512, 300);
-    const signT = new T.CanvasTexture(signC);
-    const sign = new T.Mesh(new T.PlaneGeometry(1.1, 0.64), new T.MeshBasicMaterial({ map: signT }));
-    sign.position.set(0, 2.95, 0.085); door.add(sign);
-    door.userData = { id: 'door', kind: 'action', label: 'Knock' };
-
-    const sw = group(4.1, 2.65, RW - 0.18);
-    sw.rotation.y = Math.PI;
-    mesh(B(0.3, 0.46, 0.04), M.bone, 0, 0, 0.02, sw);
-    const toggle = mesh(B(0.08, 0.16, 0.06), M.furn, 0, 0, 0.05, sw);
-    sw.userData = { id: 'switch', kind: 'action', label: 'Lights' };
-
-    const phone = group(-0.6, 2.6, RW - 0.17);
-    phone.rotation.y = Math.PI;
-    mesh(B(0.62, 0.95, 0.2), M.yellow, 0, 0, 0.1, phone);
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) mesh(B(0.07, 0.07, 0.02), M.furn, -0.24 + c * 0.09, 0.2 - r * 0.12, 0.21, phone);
-    const hs = group(0.17, 0, 0.27, phone);
-    mesh(C(0.055, 0.055, 0.6, 12), M.yellow, 0, 0, 0, hs);
-    mesh(B(0.16, 0.14, 0.14), M.yellow, 0, 0.32, 0, hs);
-    mesh(B(0.16, 0.14, 0.14), M.yellow, 0, -0.32, 0, hs);
-    class Cord extends T.Curve {
-      constructor(a, b, c) { super(); this.a = a; this.b = b; this.c = c; }
-      getPoint(t, target) {
-        const out = target || new T.Vector3();
-        const u = 1 - t;
-        out.set(0, 0, 0).addScaledVector(this.a, u * u).addScaledVector(this.c, 2 * u * t).addScaledVector(this.b, t * t);
-        const ang = t * Math.PI * 2 * 24;
-        const r = 0.04 * Math.min(1, t * 12, (1 - t) * 12);
-        out.x += Math.cos(ang) * r; out.z += Math.sin(ang) * r;
-        return out;
-      }
-    }
-    const cord = new Cord(new T.Vector3(0.17, -0.4, 0.27), new T.Vector3(0.0, -0.47, 0.12), new T.Vector3(0.12, -1.9, 0.35));
-    mesh(new T.TubeGeometry(cord, 480, 0.013, 5, false), M.yellow, 0, 0, 0, phone);
-    phone.userData = { id: 'contact', kind: 'section', label: 'Open' };
-
-    const clock = group(2.5, 5.2, RW - 0.01);
-    clock.rotation.y = Math.PI;
-    const rim = mesh(C(0.5, 0.5, 0.08, 40), M.furn, 0, 0, 0.04, clock); rim.rotation.x = Math.PI / 2;
-    const clockC = mkCanvas(256, 256);
-    const clockT = new T.CanvasTexture(clockC);
-    const face = new T.Mesh(new T.CircleGeometry(0.44, 40), new T.MeshBasicMaterial({ map: clockT }));
-    face.position.z = 0.085; clock.add(face);
-    const hand = (w, len, mat) => {
-      const g = B(w, len, 0.012); g.translate(0, len / 2 - 0.04, 0);
-      const m = new T.Mesh(g, mat); m.position.z = 0.1; clock.add(m); return m;
-    };
-    const hH = hand(0.035, 0.24, M.furn), hM = hand(0.025, 0.35, M.furn), hS = hand(0.012, 0.38, M.yellow);
-
-    /* ---------- West wall: bookshelf, pinboard, beanbag ---------- */
-    const shelf = group(-RW + 0.45, 0, -3.0);
-    const side = B(0.8, 4, 0.08);
-    mesh(side, M.furn, 0, 2, -1.4, shelf);
-    mesh(side, M.furn, 0, 2, 1.4, shelf);
-    mesh(B(0.05, 4, 2.8), M.furn, -0.375, 2, 0, shelf);
-    const shelfY = [0.03, 1.0, 1.97, 2.94, 3.97];
-    shelfY.forEach(y => mesh(B(0.8, 0.06, 2.72), M.furn, 0, y, 0, shelf));
-    const bookMats = [M.furn2, M.bone, M.yellow, M.furn2, M.bone];
-    for (let l = 0; l < 4; l++) {
-      let z = -1.34;
-      const base = shelfY[l] + 0.03;
-      while (true) {
-        const w = 0.1 + rnd() * 0.11, h = 0.5 + rnd() * 0.33, d = 0.5 + rnd() * 0.16;
-        if (z + w > 1.34) break;
-        if (rnd() < 0.1) { z += 0.2; continue; }
-        const b = mesh(B(d, h, w), bookMats[Math.floor(rnd() * bookMats.length)], 0.38 - d / 2, base + h / 2, z + w / 2, shelf);
-        if (rnd() < 0.08) b.rotation.x = 0.1;
-        z += w + 0.012;
-      }
-    }
-    shelf.userData = { id: 'awards', kind: 'section', label: 'Open' };
-
-    const board = group(-RW + 0.04, 3.35, 5.2);
-    board.rotation.y = Math.PI / 2;
-    mesh(B(2.7, 1.85, 0.08), M.furn, 0, 0, 0, board);
-    const boardC = mkCanvas(1024, 700);
-    const boardT = new T.CanvasTexture(boardC);
-    const boardFace = new T.Mesh(new T.PlaneGeometry(2.56, 1.72),
-      new T.MeshBasicMaterial({ map: boardT }));
-    boardFace.position.z = 0.042; boardFace.receiveShadow = true; board.add(boardFace);
-    board.userData = { id: 'about', kind: 'section', label: 'Open' };
-
-    const bean = group(-RW + 1.4, 0, 3.4);
-    const bb = mesh(S(1, 14, 10), M.yellowFlat, 0, 0.5, 0, bean); bb.scale.set(1.05, 0.55, 1);
-    bean.userData = { id: 'bean', kind: 'action', label: 'Squish' };
-
-    /* ---------- More room: bed, sofa corner, whiteboard, prints, skateboard ---------- */
-    const bed = group(RW - 2.4, 0, -1.0);
-    [[-1.9, -1.3], [-1.9, 1.3], [1.9, -1.3], [1.9, 1.3]].forEach(([x, z]) => mesh(B(0.16, 0.22, 0.16), M.furn, x, 0.11, z, bed));
-    mesh(B(4.2, 0.48, 3.0), M.furn, 0, 0.44, 0, bed);
-    mesh(B(4.0, 0.4, 2.8), M.bone, -0.05, 0.88, 0, bed);
-    mesh(B(2.7, 0.14, 2.92), M.yellow, -0.7, 1.12, 0, bed);
-    mesh(B(0.75, 0.28, 1.7), M.bone, 1.45, 1.22, 0, bed);
-    mesh(B(0.22, 1.9, 3.0), M.furn2, 2.0, 1.15, 0, bed);
-    bed.userData = { id: 'bed', kind: 'action', label: 'Nap' };
-
-    const rug2 = group(-3.8, 0, RW - 2.3);
-    flat(mesh(B(5.0, 0.05, 3.6), M.furn2, 0, 0.025, 0, rug2));
-    flat(mesh(B(4.4, 0.08, 3.0), M.bone, 0, 0.04, 0, rug2));
-
-    const sofa = group(-3.8, 0, RW - 1.0);
-    sofa.rotation.y = Math.PI;
-    mesh(B(3.6, 0.6, 1.4), M.furn2, 0, 0.4, 0, sofa);
-    mesh(B(3.0, 0.26, 1.2), M.yellowFlat, 0, 0.83, 0.08, sofa);
-    mesh(B(3.6, 1.1, 0.35), M.furn2, 0, 1.15, -0.55, sofa);
-    mesh(B(0.32, 0.9, 1.4), M.furn2, -1.66, 0.75, 0, sofa);
-    mesh(B(0.32, 0.9, 1.4), M.furn2, 1.66, 0.75, 0, sofa);
-    mesh(B(0.7, 0.6, 0.2), M.bone, -0.9, 1.25, -0.28, sofa).rotation.z = 0.15;
-    mesh(B(0.7, 0.6, 0.2), M.yellow, 0.9, 1.25, -0.28, sofa).rotation.z = -0.12;
-    sofa.userData = { id: 'sofa', kind: 'action', label: 'Squish' };
-
-    const table = group(-3.8, 0, RW - 3.1);
-    mesh(B(2.2, 0.1, 1.1), M.furn, 0, 0.85, 0, table);
-    [[-0.95, -0.45], [-0.95, 0.45], [0.95, -0.45], [0.95, 0.45]].forEach(([x, z]) => mesh(B(0.08, 0.8, 0.08), M.furn, x, 0.4, z, table));
-    const lap = group(0.2, 0.9, 0, table);
-    lap.rotation.y = 2.35;
-    mesh(B(0.8, 0.04, 0.55), M.furn2, 0, 0.02, 0, lap);
-    const lid = group(0, 0.04, -0.27, lap); lid.rotation.x = -0.25;
-    mesh(B(0.8, 0.52, 0.03), M.furn2, 0, 0.26, 0, lid);
-    const lapScreen = new T.Mesh(new T.PlaneGeometry(0.72, 0.44), M.ledOn); lapScreen.position.set(0, 0.26, 0.017); lid.add(lapScreen);
-    mesh(C(0.1, 0.09, 0.22, 14), M.bone, -0.7, 1.01, 0.2, table);
-
-    const wb = group(-RW + 0.04, 3.5, 1.2);
-    wb.rotation.y = Math.PI / 2;
-    mesh(B(3.4, 2.1, 0.08), M.furn2, 0, 0, 0, wb);
-    const wbC = mkCanvas(1024, 620);
-    const wbT = new T.CanvasTexture(wbC);
-    const wbFace = new T.Mesh(new T.PlaneGeometry(3.2, 1.92), new T.MeshBasicMaterial({ map: wbT }));
-    wbFace.position.z = 0.042; wb.add(wbFace);
-    mesh(B(2.6, 0.06, 0.18), M.furn2, 0, -1.08, 0.08, wb);
-    mesh(B(0.3, 0.05, 0.05), M.yellow, -0.6, -1.03, 0.12, wb);
-    wb.userData = { id: 'activities', kind: 'section', label: 'Open' };
-
-    const prints = [];
-    [-5.2, 5.2].forEach(x => {
-      const fr = group(x, 3.9, -RW + 0.04);
-      mesh(B(1.7, 2.2, 0.08), M.furn, 0, 0, 0, fr);
-      const c = mkCanvas(340, 440), tx = new T.CanvasTexture(c);
-      const pl = new T.Mesh(new T.PlaneGeometry(1.5, 2.0), new T.MeshBasicMaterial({ map: tx }));
-      pl.position.z = 0.042; fr.add(pl);
-      prints.push({ c, tx });
-    });
-
-    const robe = group(RW - 0.85, 0, 2.4);
-    robe.rotation.y = -Math.PI / 2;
-    mesh(B(2.6, 4.4, 1.3), M.furn2, 0, 2.2, 0, robe);
-    mesh(B(0.04, 4.1, 0.02), M.furn, 0, 2.25, 0.66, robe);
-    mesh(B(0.06, 0.5, 0.06), M.bone, -0.14, 2.4, 0.68, robe);
-    mesh(B(0.06, 0.5, 0.06), M.bone, 0.14, 2.4, 0.68, robe);
-    mesh(B(2.7, 0.14, 1.36), M.furn, 0, 4.45, 0, robe);
-
-    const skate = group(3.0, 0, 3.6);
-    skate.rotation.y = 0.5;
-    mesh(B(1.7, 0.06, 0.48), M.yellow, 0, 0.26, 0, skate);
-    [-0.55, 0.55].forEach(x => {
-      mesh(B(0.12, 0.08, 0.4), M.metal, x, 0.19, 0, skate);
-      [-0.2, 0.2].forEach(z => { const wl = mesh(C(0.08, 0.08, 0.07, 14), M.bone, x, 0.09, z, skate); wl.rotation.x = Math.PI / 2; });
-    });
-    skate.userData = { id: 'skate', kind: 'action', label: 'Roll' };
-
-    /* ---------- Ceiling fan + light ---------- */
-    const fan = group(0, RH, 0);
-    fan.scale.set(1.3, 1.3, 1.3);
-    flat(mesh(C(0.04, 0.04, 0.5, 8), M.furn, 0, -0.25, 0, fan));
-    flat(mesh(C(0.28, 0.24, 0.22, 20), M.furn, 0, -0.6, 0, fan));
-    const blades = group(0, -0.63, 0, fan);
-    for (let i = 0; i < 4; i++) {
-      const hb = group(0, 0, 0, blades); hb.rotation.y = i * Math.PI / 2;
-      const bl = mesh(B(1.7, 0.03, 0.34), M.furn2, 1.0, 0, 0, hb); bl.rotation.x = 0.12;
-    }
-    const globe = flat(mesh(new T.SphereGeometry(0.22, 18, 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), M.bulb2, 0, -0.72, 0, fan));
-    fan.userData = { id: 'fan', kind: 'action', label: 'Fan' };
-
-    /* ---------- Lights: flat key light from above, soft fill, lamp pools ---------- */
-    const amb = new T.AmbientLight(0xffffff, 0.6); scene.add(amb);
-    const sun = new T.DirectionalLight(0xffffff, 0.5);
-    sun.position.set(5, 14, 3.5); sun.castShadow = true;
-    const smap = fine.matches ? 2048 : 1024;
-    sun.shadow.mapSize.set(smap, smap);
-    Object.assign(sun.shadow.camera, { left: -RW - 1, right: RW + 1, top: RW + 1, bottom: -RW - 1, near: 0.5, far: 36 });
-    sun.shadow.camera.updateProjectionMatrix();
-    sun.shadow.bias = -0.001;
-    scene.add(sun); scene.add(sun.target);
-    const sideL = new T.DirectionalLight(0xffffff, 0.12); sideL.position.set(-6, 3, 8); scene.add(sideL);
-    const ceilL = new T.PointLight(0xffffff, 0.35, 24, 1); ceilL.position.set(0, RH - 0.9, 0); scene.add(ceilL);
-    const lampLight = new T.PointLight(0xE6ECFF, 1, 14, 2); lampLight.position.set(-RW + 0.7, 3.45, -RW + 0.7); scene.add(lampLight);
-    const glow = new T.PointLight(0xDCE5FF, 0.3, 5, 2); glow.position.set(0, 2.7, -RW + 1.3); scene.add(glow);
-
-    let isNight = false, lampOn = true, ceilOn = true;
-    function updateLights() {
-      const p = isNight ? PAL.night : PAL.day;
-      amb.intensity = p.amb * (isNight && !lampOn && !ceilOn ? 0.6 : 1);
-      sun.intensity = p.dir;
-      sideL.intensity = p.side;
-      ceilL.intensity = ceilOn ? p.ceilL : 0;
-      M.bulb2.color.setHex(ceilOn ? 0xF2F5FF : 0x2a3470);
-      lampLight.intensity = lampOn ? p.lamp : 0; lampLight.color.setHex(p.lampC);
-      M.bulb.color.setHex(lampOn ? 0xF2F5FF : 0x2a3470);
-      glow.intensity = p.glow;
-      toggle.rotation.x = ceilOn ? -0.35 : 0.35;
-    }
-    function applyTheme() {
-      isNight = getComputedStyle(root).getPropertyValue('--scene').trim() === 'night';
-      const p = isNight ? PAL.night : PAL.day;
-      renderer.setClearColor(p.bg, 1);
-      post.uniforms.edge.value.setHex(p.bg);
-      post.uniforms.ink.value.setHex(p.ink);
-      post.uniforms.vig.value = p.vig;
-      ['wall', 'ceil', 'floor', 'furn', 'furn2', 'bone', 'leaf', 'metal'].forEach(k => M[k].color.setHex(p[k]));
-      M.yellow.color.setHex(p.acc); M.yellow2.color.setHex(p.acc); M.yellowFlat.color.setHex(p.acc2); M.edge.color.setHex(p.band);
-      [M.yellow, M.yellowFlat, M.yellow2, M.edge].forEach(m => m.emissive.setHex(p.ember));
-      M.ink.color.setHex(p.ink);
-      updateLights();
-      drawSky();
+    scene.add(new T.HemisphereLight(0x3f5a8a, 0x08080f, 0.24));
+    // interior ceiling lights, an evenly spaced row running the length of the room
+    const ROOM_X0 = -6.2, ROOM_X1 = 6.2, ROW_N = 6, ROW_Y = 2.9, ROW_Z = 0.9;
+    const ROW_COLORS = [0x7a9ad0, 0x6f8fc4, 0x6884b8, 0x7a9ad0, 0x6f8fc4, 0x6884b8];
+    for (let i = 0; i < ROW_N; i++) {
+      const x = ROOM_X0 + (ROOM_X1 - ROOM_X0) * (i / (ROW_N - 1));
+      const l = new T.PointLight(ROW_COLORS[i], 1.15, 11, 2);
+      l.position.set(x, ROW_Y, ROW_Z);
+      scene.add(l);
     }
 
-    /* ---------- Canvas drawings ---------- */
-    const CODE = [
-      '// case records module',
-      "import { Router } from 'express';",
-      "import { auth } from './middleware/auth';",
-      '',
-      'const router = Router();',
-      '',
-      "router.get('/api/cases', auth, async (req, res) => {",
-      "  const cases = await db.all('SELECT * FROM cases');",
-      '  res.json(cases);',
-      '});',
-      '',
-      "router.post('/api/cases', auth, async (req, res) => {",
-      '  const { title, status } = req.body;',
-      "  await db.run('INSERT INTO cases ...', [title, status]);",
-      '  res.status(201).end();',
-      '});',
-      '',
-      'export default router;',
-      ''
-    ];
-    const KW = /\b(import|from|const|async|await|export|default|return)\b/g;
-    let scroll = 0;
-    function drawScreen() {
-      const x = screenC.getContext('2d'), w = 512, h = 296;
-      x.fillStyle = '#070B2E'; x.fillRect(0, 0, w, h);
-      x.fillStyle = '#121A55'; x.fillRect(0, 0, w, 26);
-      x.fillStyle = '#2F4BFF'; x.fillRect(0, 0, 150, 26);
-      setFont(x, '500 13px "IBM Plex Mono", monospace');
-      x.textBaseline = 'middle'; x.fillStyle = '#fff'; x.fillText('case-records.ts', 12, 13);
-      x.save(); x.beginPath(); x.rect(0, 27, w, h - 27 - 20); x.clip();
-      setFont(x, '500 13px "IBM Plex Mono", monospace');
-      x.textBaseline = 'top';
-      const cw = x.measureText('M').width, lh = 18, top = 34, total = CODE.length * lh;
-      const off = scroll % total;
-      for (let rep = 0; rep < 2; rep++) {
-        CODE.forEach((line, i) => {
-          const y = top + i * lh + rep * total - off;
-          if (y < 12 || y > h) return;
-          x.fillStyle = '#3A4690'; x.fillText(String(i + 1).padStart(2, ' '), 8, y);
-          const lx = 36;
-          if (line.trim().startsWith('//')) { x.fillStyle = '#6E7BC4'; x.fillText(line, lx, y); return; }
-          x.fillStyle = '#E6EBFF'; x.fillText(line, lx, y);
-          x.fillStyle = '#8FACFF'; KW.lastIndex = 0;
-          let m; while ((m = KW.exec(line))) x.fillText(m[0], lx + m.index * cw, y);
+    // light from outside: a strong glow just beyond the big window, spilling city light into the room
+    const outsideGlow = new T.PointLight(0x9fc6ef, 5, 20, 1.6);
+    outsideGlow.position.set(-8.6, 2.4, 1.0);
+    scene.add(outsideGlow);
+    const outsideGlow2 = new T.PointLight(0xe8b96a, 2.2, 16, 1.8);
+    outsideGlow2.position.set(-8.6, 1.2, -3.5);
+    scene.add(outsideGlow2);
+
+    // faint volumetric-ish light shafts pouring through the window, drawn as soft
+    // additive gradient planes so the room reads as sunlit/citylit rather than flat-lit
+    function makeShaftTexture() {
+      const c = document.createElement('canvas');
+      c.width = 32; c.height = 256;
+      const x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 0, 256);
+      g.addColorStop(0, 'rgba(255,255,255,0.55)');
+      g.addColorStop(0.6, 'rgba(255,255,255,0.12)');
+      g.addColorStop(1, 'rgba(255,255,255,0)');
+      x.fillStyle = g;
+      x.fillRect(0, 0, 32, 256);
+      return new T.CanvasTexture(c);
+    }
+    const shaftTex = makeShaftTexture();
+    function addShafts(list) {
+      list.forEach(s => {
+        const mat = new T.MeshBasicMaterial({
+          map: shaftTex, transparent: true, opacity: s.op, blending: T.AdditiveBlending,
+          depthWrite: false, side: T.DoubleSide, color: 0xcfe0f5,
         });
-      }
-      x.restore();
-      x.fillStyle = '#2F4BFF'; x.fillRect(0, h - 20, w, 20);
-      x.fillStyle = '#fff'; x.textBaseline = 'middle';
-      setFont(x, '500 12px "IBM Plex Mono", monospace');
-      x.fillText('main   build passing', 10, h - 10);
-      screenT.needsUpdate = true;
-    }
-    function drawPoster() {
-      const x = posterC.getContext('2d'), w = posterC.width, h = posterC.height;
-      x.fillStyle = '#2339E6'; x.fillRect(0, 0, w, h);
-      x.strokeStyle = '#F2F5FF'; x.lineWidth = 6; x.strokeRect(20, 20, w - 40, h - 40);
-      x.fillStyle = '#F2F5FF'; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
-      let size = 280;
-      setFont(x, `900 ${size}px Archivo, "Helvetica Neue", Arial, sans-serif`, 'extra-condensed');
-      size = Math.min(size, size * (w - 130) / x.measureText('JIWOO HA').width);
-      setFont(x, `900 ${size}px Archivo, "Helvetica Neue", Arial, sans-serif`, 'extra-condensed');
-      x.fillText('JIWOO HA', w / 2, h / 2 + size * 0.36);
-      posterT.needsUpdate = true;
-    }
-    function note(x, cx, cy, w, h, rot, bg, lines, size, pin) {
-      x.save(); x.translate(cx, cy); x.rotate(rot);
-      x.fillStyle = 'rgba(2,4,20,.5)'; x.fillRect(-w / 2 + 8, -h / 2 + 10, w, h);
-      x.fillStyle = bg; x.fillRect(-w / 2, -h / 2, w, h);
-      x.strokeStyle = '#0B1250'; x.lineWidth = 5; x.strokeRect(-w / 2, -h / 2, w, h);
-      x.fillStyle = '#0B1250'; x.textAlign = 'left'; x.textBaseline = 'top';
-      setFont(x, `800 ${size}px Archivo, Arial, sans-serif`, 'condensed');
-      const widest = Math.max(...lines.map(l => x.measureText(l).width));
-      if (widest > w - 44) { size = size * (w - 44) / widest; setFont(x, `800 ${size}px Archivo, Arial, sans-serif`, 'condensed'); }
-      lines.forEach((l, i) => x.fillText(l, -w / 2 + 22, -h / 2 + 34 + i * size * 1.05));
-      x.fillStyle = pin; x.beginPath(); x.arc(0, -h / 2 + 16, 10, 0, Math.PI * 2); x.fill();
-      x.restore();
-    }
-    function drawBoard() {
-      const x = boardC.getContext('2d'), w = 1024, h = 700;
-      let s2 = 5; const r2 = () => (s2 = (s2 * 16807) % 2147483647) / 2147483647;
-      x.fillStyle = '#10186A'; x.fillRect(0, 0, w, h);
-      for (let i = 0; i < 1400; i++) { x.fillStyle = `rgba(255,255,255,${(0.02 + r2() * 0.05).toFixed(3)})`; x.fillRect(r2() * w, r2() * h, 2, 2); }
-      x.save(); x.translate(235, 345); x.rotate(-0.06);
-      x.fillStyle = 'rgba(2,4,20,.5)'; x.fillRect(-150, -200, 320, 400);
-      x.fillStyle = '#F2F5FF'; x.fillRect(-160, -210, 320, 400);
-      x.strokeStyle = '#0B1250'; x.lineWidth = 5; x.strokeRect(-160, -210, 320, 400);
-      x.fillStyle = '#1F2B8A'; x.fillRect(-135, -185, 270, 270);
-      x.textAlign = 'center'; x.textBaseline = 'middle';
-      x.fillStyle = '#9DB0F5'; setFont(x, '900 120px Archivo, Arial, sans-serif', 'condensed'); x.fillText('JH', 0, -50);
-      x.fillStyle = '#0B1250'; setFont(x, '900 42px Archivo, Arial, sans-serif', 'condensed'); x.fillText('JIWOO HA', 0, 142);
-      x.fillStyle = '#2F4BFF'; x.beginPath(); x.arc(0, -196, 11, 0, Math.PI * 2); x.fill();
-      x.restore();
-      note(x, 560, 165, 290, 200, 0.05, '#9DB4FF', ['Diploma', 'in IT'], 56, '#0B1250');
-      note(x, 860, 190, 270, 230, -0.07, '#F2F5FF', ['NYP School', 'of Information', 'Technology'], 44, '#2F4BFF');
-      note(x, 600, 480, 340, 210, -0.04, '#9DB4FF', ['Apr 2025 –', 'Apr 2028'], 54, '#0B1250');
-      note(x, 880, 520, 220, 200, 0.08, '#F2F5FF', ['Korean', 'English', 'Chinese', 'Japanese'], 34, '#0B1250');
-      boardT.needsUpdate = true;
-    }
-    function drawClockFace() {
-      const x = clockC.getContext('2d');
-      x.fillStyle = '#F2F5FF'; x.fillRect(0, 0, 256, 256);
-      x.save(); x.translate(128, 128);
-      for (let i = 0; i < 12; i++) {
-        x.save(); x.rotate(i * Math.PI / 6);
-        x.fillStyle = i % 3 === 0 ? '#0B1250' : '#7C88C8';
-        x.fillRect(-3, -118, 6, i % 3 === 0 ? 26 : 14);
-        x.restore();
-      }
-      x.fillStyle = '#2339E6'; x.textAlign = 'center'; x.textBaseline = 'middle';
-      setFont(x, '800 22px Archivo, Arial, sans-serif', 'condensed'); x.fillText('SGT', 0, 48);
-      x.restore();
-      clockT.needsUpdate = true;
-    }
-    function drawSign() {
-      const x = signC.getContext('2d'), w = 512, h = 300;
-      x.fillStyle = '#2339E6'; x.fillRect(0, 0, w, h);
-      x.strokeStyle = '#F2F5FF'; x.lineWidth = 10; x.strokeRect(14, 14, w - 28, h - 28);
-      x.fillStyle = '#F2F5FF'; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
-      setFont(x, '900 120px Archivo, Arial, sans-serif', 'extra-condensed');
-      x.fillText('NO BUGS', w / 2, 158);
-      setFont(x, '700 40px Archivo, Arial, sans-serif', 'condensed');
-      x.fillText('beyond this point', w / 2, 232);
-      signT.needsUpdate = true;
-    }
-    function drawSky() {
-      const x = skyC.getContext('2d'), w = 512, h = 352;
-      let s3 = 3; const r3 = () => (s3 = (s3 * 16807) % 2147483647) / 2147483647;
-      const g = x.createLinearGradient(0, 0, 0, h);
-      if (isNight) { g.addColorStop(0, '#03051A'); g.addColorStop(1, '#101A63'); }
-      else { g.addColorStop(0, '#9FB6FF'); g.addColorStop(1, '#E3EAFF'); }
-      x.fillStyle = g; x.fillRect(0, 0, w, h);
-      x.fillStyle = isNight ? '#E6EBFF' : '#F7F9FF';
-      x.beginPath(); x.arc(390, 80, isNight ? 26 : 38, 0, Math.PI * 2); x.fill();
-      let bx = -10;
-      while (bx < w) {
-        const bw = 40 + r3() * 70, bh = 110 + r3() * 190;
-        x.fillStyle = isNight ? '#070B2E' : '#6F88F0';
-        x.fillRect(bx, h - bh, bw, bh);
-        for (let wy = h - bh + 12; wy < h - 8; wy += 16) {
-          for (let wx = bx + 8; wx < bx + bw - 10; wx += 14) {
-            const lit = r3();
-            if (isNight) { if (lit < 0.3) { x.fillStyle = lit < 0.12 ? '#8FACFF' : '#E6EBFF'; x.fillRect(wx, wy, 6, 7); } }
-            else { x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(wx, wy, 6, 7); }
-          }
-        }
-        bx += bw + 6 + r3() * 18;
-      }
-      skyT.needsUpdate = true;
-    }
-    function drawWhiteboard() {
-      const x = wbC.getContext('2d'), w = 1024, h = 620;
-      x.fillStyle = '#F7F9FF'; x.fillRect(0, 0, w, h);
-      x.textAlign = 'left'; x.textBaseline = 'middle'; x.lineCap = 'round'; x.lineJoin = 'round';
-      x.fillStyle = '#0B1250';
-      setFont(x, '900 58px Archivo, Arial, sans-serif', 'condensed'); x.fillText('ACTIVITIES', 48, 70);
-      x.strokeStyle = '#2F4BFF'; x.lineWidth = 6;
-      x.beginPath(); x.moveTo(48, 108); x.lineTo(330, 104); x.stroke();
-      const items = ['Swift Club: publicity subcommittee', 'SEG Club: subcommittee', 'SDG Open Hack 2025',
-                     'IMPACT WEEK 2025', 'CNY lunch with the elderly', 'Project Rejuven-Aid 2026'];
-      setFont(x, '700 38px Archivo, Arial, sans-serif', 'condensed');
-      items.forEach((t, i) => {
-        const y = 170 + i * 72;
-        x.strokeStyle = '#2F4BFF'; x.lineWidth = 5;
-        x.strokeRect(52, y - 20, 40, 40);
-        x.beginPath(); x.moveTo(58, y); x.lineTo(70, y + 13); x.lineTo(96, y - 26); x.stroke();
-        x.fillStyle = '#0B1250'; x.fillText(t, 120, y + 2);
-      });
-      wbT.needsUpdate = true;
-    }
-    function drawPrints() {
-      prints.forEach(({ c, tx }, i) => {
-        const x = c.getContext('2d'), w = c.width, h = c.height;
-        x.fillStyle = i ? '#2339E6' : '#F2F5FF'; x.fillRect(0, 0, w, h);
-        const ink = i ? '#F2F5FF' : '#2339E6';
-        x.fillStyle = ink; x.strokeStyle = ink; x.lineWidth = 10;
-        if (i === 0) {
-          x.beginPath(); x.arc(w / 2, 160, 90, 0, Math.PI * 2); x.fill();
-          for (let k = 0; k < 4; k++) x.fillRect(40, 290 + k * 30, w - 80, 12);
-        } else {
-          for (let k = 0; k < 5; k++) { x.beginPath(); x.arc(w / 2, h / 2, 30 + k * 34, 0, Math.PI * 2); x.stroke(); }
-          x.fillRect(w / 2 - 6, 20, 12, h - 40);
-        }
-        tx.needsUpdate = true;
+        const shaft = new T.Mesh(new T.PlaneGeometry(s.w, s.h), mat);
+        shaft.position.set(s.x, s.y, s.z);
+        shaft.rotation.x = s.rx || 0;
+        shaft.rotation.y = s.ry || 0;
+        shaft.rotation.z = s.rz || 0;
+        shaft.renderOrder = 2;
+        scene.add(shaft);
       });
     }
-    function redraw() { drawScreen(); drawPoster(); drawBoard(); drawClockFace(); drawSign(); drawSky(); drawWhiteboard(); drawPrints(); }
-    redraw();
-    applyTheme();
-    try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme); } catch (e) {}
-    new MutationObserver(applyTheme).observe(root, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+    // the big west wall window -- shafts lean inward along +X
+    addShafts([
+      { x: -6.9, y: 1.6, z: -2.2, ry: 0.62, rz: -0.32, w: 2.4, h: 8, op: 0.32 },
+      { x: -6.9, y: 1.3, z: 0.4, ry: 0.6, rz: -0.38, w: 1.9, h: 7.5, op: 0.36 },
+      { x: -6.9, y: 1.7, z: 3.2, ry: 0.55, rz: -0.28, w: 2.6, h: 8.5, op: 0.3 },
+    ]);
+    // the original north window -- shafts lean inward along +Z
+    addShafts([
+      { x: -4.0, y: 1.5, z: -5.1, rx: -0.55, rz: 0.22, w: 2.2, h: 7.5, op: 0.3 },
+      { x: -1.0, y: 1.3, z: -5.1, rx: -0.6, rz: -0.18, w: 1.8, h: 7, op: 0.33 },
+      { x: 2.5, y: 1.6, z: -5.1, rx: -0.5, rz: 0.15, w: 2.4, h: 8, op: 0.27 },
+    ]);
 
-    /* ---------- Interaction bookkeeping ---------- */
-    const pickables = [monitor, board, shelf, rack, phone, lamp, duck, chair, spk, plant, bean, poster, fan, door, sw, bed, sofa, wb, skate];
-    pickables.forEach(g => Object.assign(g.userData, { h: 0, baseX: g.position.x, baseY: g.position.y, baseZ: g.position.z, baseRY: g.rotation.y, baseRZ: g.rotation.z, bs: g.scale.x, anim: null }));
-    const CENTER = {
-      work: new T.Vector3(0, 2.7, -RW + 0.55),
-      about: new T.Vector3(-RW + 0.1, 3.35, 5.2),
-      awards: new T.Vector3(-RW + 0.5, 2.2, -3.0),
-      activities: new T.Vector3(-RW + 0.1, 3.5, 1.2),
-      contact: new T.Vector3(-0.6, 2.6, RW - 0.3)
-    };
-    const ANCH = {
-      work: new T.Vector3(0, 3.55, -RW + 0.55),
-      about: new T.Vector3(-RW + 0.1, 4.4, 5.2),
-      awards: new T.Vector3(-RW + 0.45, 4.3, -3.0),
-      activities: new T.Vector3(-RW + 0.1, 4.75, 1.2),
-      contact: new T.Vector3(-0.6, 3.3, RW - 0.3)
-    };
+    // the room shell (walls/ceiling) is split across these materials in the source
+    // file -- tint them toward one shared tone in the traversal below for cohesion.
+    const WALL_MATERIAL_NAMES = new Set(['Material.002', 'Material.003', 'Material.004', 'Material.008']);
+    const WALL_TINT = new T.Color(0x39424c);
+
+    const gltfLoader = new T.GLTFLoader();
+    gltfLoader.load('assets/loft.glb', gltf => {
+      scene.add(gltf.scene);
+      let n = 0;
+      const bakedLights = [];
+      gltf.scene.traverse(o => {
+        if (o.isMesh) {
+          o.userData.oid = 0.05 + ((n++ * 0.6180339887) % 1) * 0.9;
+          o.onBeforeRender = setOid;
+          o.castShadow = o.receiveShadow = true;
+
+          // the imported materials came in very glossy (low roughness / high specular),
+          // which reads as harsh hot-spot reflections under point lights -- flatten them
+          const mats = Array.isArray(o.material) ? o.material : [o.material];
+          const isGlass = /glass/i.test(o.name);
+          mats.forEach(mat => {
+            if (!mat || !mat.isMeshStandardMaterial) return;
+            if (isGlass) {
+              mat.roughness = Math.max(mat.roughness, 0.35);
+            } else {
+              mat.roughness = Math.max(mat.roughness, 0.75);
+              mat.metalness = Math.min(mat.metalness, 0.15);
+            }
+            // the room shell was built from several materials with wildly different
+            // base tones (near-black wall segments next to light concrete) -- pull
+            // just those toward one shared moody blue-grey so the walls read as one
+            // consistent room instead of a patchwork of mismatched panels.
+            if (WALL_MATERIAL_NAMES.has(mat.name) && mat.color) {
+              mat.color.lerp(WALL_TINT, 0.35);
+            }
+            // the cityscape dome sits "at infinity" behind the window -- the room's
+            // fog shouldn't wash it out the way it does nearby furniture.
+            if (mat.name === 'Material.017') {
+              mat.fog = false;
+              mat.toneMapped = false;
+            }
+            mat.envMapIntensity = 0.3;
+            mat.needsUpdate = true;
+          });
+        }
+        if (o.isLight) bakedLights.push(o);  // the room's own baked lights -- we light the scene ourselves instead
+      });
+      bakedLights.forEach(l => l.parent && l.parent.remove(l));
+
+      // Wire a real object in the model up as a clickable pickable -- it gets the
+      // same hover-glow outline as any other pickable, and its own position (not
+      // a floating marker) is what the camera zooms toward and the nav tag follows.
+      function wireRealObject(name, id, label, kind) {
+        const g = gltf.scene.getObjectByName(name);
+        if (!g) { console.warn('wireRealObject: not found ->', name); return null; }
+        g.userData.id = id;
+        g.userData.kind = kind;
+        g.userData.label = label;
+        Object.assign(g.userData, {
+          h: 0, baseX: g.position.x, baseY: g.position.y, baseZ: g.position.z,
+          baseRY: g.rotation.y, baseRZ: g.rotation.z, bs: g.scale.x || 1, anim: null
+        });
+        // the object's own pivot can sit far from where its geometry actually is
+        // (imported models often carry an offset origin) -- aim the zoom and the
+        // nav tag at the true visual centre (world-space bounding-box centre)
+        // instead of that pivot, so "examine" lands on the object, not empty air.
+        const box = new T.Box3().setFromObject(g);
+        const aimPoint = box.isEmpty() ? g.position.clone() : box.getCenter(new T.Vector3());
+        g.userData.aimPoint = aimPoint;
+        pickables.push(g);
+        if (CENTER[id]) CENTER[id].copy(aimPoint); else CENTER[id] = aimPoint.clone();
+        return g;
+      }
+
+      // The desk calendar is a real object in the model -- reuses the 'activities' anchor.
+      wireRealObject('DeskCalendar_Root', 'activities', 'Activities', 'examine');
+
+      // The globe (Languages), the phone (Contact) and the easel (Art) replace the
+      // old invisible floating markers for those sections with the real props.
+      wireRealObject('Globe_Root', 'languages', 'Languages', 'examine');
+      wireRealObject('Phone_Root', 'contact', 'Contact', 'examine');
+      wireRealObject('ArtEasel_Root', 'art', 'Art', 'examine');
+
+      // The radio isn't a panel -- clicking it just toggles the ambient sound on/off.
+      wireRealObject('Radio_Root', 'radio', 'Sound', 'action');
+
+      // The cat, asleep on the bed -- click it and it meows.
+      wireRealObject('Cat_Root', 'cat', 'Cat', 'action');
+    }, undefined, err => console.error('room failed to load', err));
+
+    function redraw() {}
+
+    // A small glowing marker the player can click, tagged to a portfolio section.
+    // Positions are in three.js space (x = Blender x, y = Blender z, z = -Blender y) --
+    // move a marker by editing its x/y/z below. Pass visible=false for an anchor
+    // that only sets the tag/steer position and has no marker of its own (used
+    // when the real in-room object is what's clickable, like the calendar).
+    function marker(id, label, x, y, z, kind, visible = false) {
+      const g = section(group(x, y, z), id, label);
+      if (kind) g.userData.kind = kind;
+      if (visible) {
+        g.add(new T.Mesh(new T.SphereGeometry(0.05, 12, 10), new T.MeshBasicMaterial({ color: 0xFFE14A })));
+        const ring = new T.Mesh(new T.RingGeometry(0.09, 0.115, 24), new T.MeshBasicMaterial({ color: 0xFFE14A, side: T.DoubleSide, transparent: true, opacity: 0.6 }));
+        g.add(ring);
+      }
+      return g;
+    }
+
+    const pickables = [
+      marker('work', 'Projects', 4.39, 3.72, -4.06),          // framed pieces on the gallery wall
+      marker('certs', 'Certifications', 3.46, 3.73, -4.06),
+      marker('awards', 'Awards', 2.51, 3.70, -4.07),
+      marker('art', 'Art', 0.50, 3.72, -4.06),
+      marker('education', 'Education', 5.3, 1.35, 1.0),       // kitchen counter
+      marker('activities', 'Activities', 1.7, 1.16, 2.5, 'examine', false),  // anchor only -- the real calendar mesh is the click target
+      marker('clubs', 'Clubs', -4.96, 1.3, -2.63),             // couch
+      marker('languages', 'Languages', 0.0, 1.85, -4.6),       // window, looking out at the city
+      marker('volunteering', 'Volunteering', 1.4, 1.0, 2.37),  // table
+      marker('contact', 'Contact', 3.0, 1.9, 1.0)
+    ];
+    pickables.forEach(g => Object.assign(g.userData, {
+      h: 0, baseX: g.position.x, baseY: g.position.y, baseZ: g.position.z,
+      baseRY: g.rotation.y, baseRZ: g.rotation.z, bs: 1, anim: null
+    }));
+    const CENTER = {};
+    pickables.forEach(g => { CENTER[g.userData.id] = g.position.clone(); });
+
+    const ANCH = {};
+    Object.assign(ANCH, CENTER);
+
+    let markKey = '';
+    function updateHoverMarks() {
+      const keys = new Set();
+      const isTag = k => k === 'section' || k === 'examine';
+      if (hoverObj) keys.add(isTag(hoverObj.userData.kind) ? 'S:' + hoverObj.userData.id : hoverObj.uuid);
+      if (hoverTagId) keys.add('S:' + hoverTagId);
+      const key = [...keys].join('|');
+      if (key === markKey) return;
+      markKey = key;
+      pickables.forEach(g => {
+        const on = keys.has(g.uuid) || (isTag(g.userData.kind) && keys.has('S:' + g.userData.id));
+        g.traverse(o => { if (o.isMesh) o.userData.hov = on; });
+      });
+    }
+    // Menu labels sit evenly round a 360 strip, in the order the objects go round the room, and slide as you turn
+    const navis = $$('.navi');
+    const around = navis.map(n => { const d = CENTER[n.dataset.win].clone().sub(EYE); return { n, a: Math.atan2(-d.x, -d.z) }; })
+      .sort((p, q) => { const w = v => ((v % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2); return w(-p.a) - w(-q.a); });
+    around.forEach((o, i) => { o.slot = -i * Math.PI * 2 / around.length; });
+    function placeCompass() {
+      const W = innerWidth, span = Math.max(W, around.length * 130), cy = camera.rotation.y;
+      around.forEach(({ n, slot }) => {
+        const rel = Math.atan2(Math.sin(slot - cy), Math.cos(slot - cy));
+        const x = W / 2 - rel / (Math.PI * 2) * span;
+        n.style.transform = `translate3d(${x.toFixed(1)}px,0,0) translateX(-50%)`;
+        n.classList.toggle('off', x < -80 || x > W + 80 || Math.abs(rel) > Math.PI * 0.96);
+      });
+    }
 
     /* ---------- Look controls ---------- */
-    const HOME = narrow() ? { yaw: 0.05, pitch: 0.05 } : { yaw: 0.32, pitch: -0.1 };
-    let yaw = HOME.yaw + 1.6, pitch = 1.2;          // start looking up at the fan
+    const HOME = narrow() ? { yaw: 0.1, pitch: 0.06 } : { yaw: 0.12, pitch: -0.02 };
+    let yaw = HOME.yaw, pitch = HOME.pitch;
     let vYaw = 0, vPitch = 0, steer = null, view = 'overview';
     let parX = 0, parY = 0, pxGoal = 0, pyGoal = 0;
     const wrapNear = (target, from) => target + Math.round((from - target) / (Math.PI * 2)) * Math.PI * 2;
@@ -1457,7 +1302,7 @@ html.has-cursor .cursor{display:block}
       lensGoal = rad(narrow() ? clamp(58 * 5.2 / dist, 32, 62) : clamp(50 * 5.2 / dist, 26, 54));
       const kg = lensGoal / Math.hypot(aspect(), 1);
       let ty = yo, tp = po;
-      if (narrow()) tp = po - 0.42 * kg; else ty = yo - 0.36 * aspect() * kg;
+      if (narrow()) tp = po - 0.42 * kg; else ty = yo + 0.34 * aspect() * kg;
       steer = { yaw: wrapNear(ty, yaw), pitch: tp };
       vYaw = vPitch = 0;
     }
@@ -1469,8 +1314,9 @@ html.has-cursor .cursor{display:block}
     function pickAt(cx, cy) {
       const a = aspect();
       const px = (cx / innerWidth * 2 - 1) * a, py = 1 - cy / innerHeight * 2;
-      const r = Math.hypot(px, py), th = r * K;
-      if (th >= Math.PI / 2) return null;
+      const r = Math.hypot(px, py), FM = post.uniforms.fishMix.value;
+      const th = Math.atan((1 - FM) * r * Math.tan(lensC) / Math.hypot(a, 1) + FM * Math.tan(Math.min(r * K, 1.55)));
+      if (r * K >= Math.PI / 2) return null;
       const al = Math.atan2(py, px);
       dirV.set(Math.sin(th) * Math.cos(al), Math.sin(th) * Math.sin(al), -Math.cos(th)).applyQuaternion(camera.quaternion);
       ray.set(camera.position, dirV);
@@ -1549,33 +1395,28 @@ html.has-cursor .cursor{display:block}
       steer = { yaw: base.yaw + step[0], pitch: clamp(base.pitch + step[1], -1.15, 1.3) };
     });
 
-    const fanSpeeds = [0.9, 4.0, 0];
-    let fanIdx = reduce.matches ? 2 : 0, fanSpin = 0, fanV = 0;
+    const EXAMINE_LENS = rad(16);
+    function examineClick(g, u) {
+      Sound.sfx('examine');
+      const d = (u.aimPoint || g.position).clone().sub(EYE);
+      const yo = Math.atan2(-d.x, -d.z), po = Math.atan2(d.y, Math.hypot(d.x, d.z));
+      lensGoal = EXAMINE_LENS;
+      steer = { yaw: wrapNear(yo, yaw), pitch: po };
+      vYaw = vPitch = 0;
+      setTimeout(() => { openWin(u.id); lensGoal = EXAMINE_LENS; }, 650);
+    }
+
     function handleClick(cx, cy) {
       const g = pickAt(cx, cy);
-      if (!g) { stampAt(cx, cy); Sound.sfx('stamp'); return; }
+      if (!g) { return; }
       const u = g.userData;
+      if (u.kind === 'examine') { examineClick(g, u); return; }
       if (u.kind === 'section') { openWin(u.id); return; }
-      switch (u.id) {
-        case 'lamp': lampOn = !lampOn; updateLights(); Sound.sfx('click'); break;
-        case 'switch': ceilOn = !ceilOn; updateLights(); Sound.sfx('click'); break;
-        case 'fan': fanIdx = (fanIdx + 1) % fanSpeeds.length; Sound.sfx('click'); break;
-        case 'duck': u.anim = { kind: 'hop', t: 0, dur: 0.55 }; Sound.sfx('quack'); stampAt(cx, cy, 'quack'); break;
-        case 'chair': u.anim = { kind: 'spin', t: 0, dur: 1.1 }; Sound.sfx('boing'); break;
-        case 'speaker': syncSound(Sound.set(!Sound.on)); break;
-        case 'plant': u.anim = { kind: 'wiggle', t: 0, dur: 1 }; Sound.sfx('tick'); break;
-        case 'bean': u.anim = { kind: 'squish', t: 0, dur: 0.6 }; Sound.sfx('boing'); break;
-        case 'poster': stampAt(cx, cy, 'hello, world'); Sound.sfx('stamp'); break;
-        case 'door': u.anim = { kind: 'knock', t: 0, dur: 0.4 }; Sound.sfx('knock'); stampAt(cx, cy, 'exit 0'); break;
-        case 'bed': u.anim = { kind: 'squish', t: 0, dur: 0.6 }; Sound.sfx('boing'); stampAt(cx, cy, 'zzz'); break;
-        case 'sofa': u.anim = { kind: 'squish', t: 0, dur: 0.6 }; Sound.sfx('boing'); break;
-        case 'skate': u.anim = { kind: 'roll', t: 0, dur: 1.2 }; Sound.sfx('tick'); stampAt(cx, cy, 'kickflip'); break;
-        case 'rack': sudoUntil = performance.now() / 1000 + 3.5; Sound.sfx('granted'); stampAt(cx, cy, 'access granted'); break;
-      }
+      if (u.kind === 'action' && u.id === 'radio') { syncSound(Sound.set(!Sound.on)); u.anim = { kind: 'knock', t: 0, dur: 0.5 }; return; }
+      if (u.kind === 'action' && u.id === 'cat') { Sound.sfx('meow'); u.anim = { kind: 'wiggle', t: 0, dur: 0.6 }; return; }
     }
 
     /* ---------- Per-frame ---------- */
-    let ledClock = 0, screenClock = 0, sudoUntil = 0, lockLift = 0;
     const ease = p => 1 - Math.pow(1 - p, 3);
     function updateObjects(now, dt) {
       pickables.forEach(g => {
@@ -1603,39 +1444,6 @@ html.has-cursor .cursor{display:block}
         g.rotation.y = u.baseRY + ry;
         g.rotation.z = u.baseRZ + rz;
       });
-
-      fanV += (fanSpeeds[fanIdx] - fanV) * Math.min(1, dt * 1.5);
-      fanSpin += fanV * dt;
-      blades.rotation.y = fanSpin;
-
-      const p = Sound.pulse();
-      cones.forEach(c => c.scale.set(1 + p * 0.08, 1 + p * 0.6, 1 + p * 0.08));
-
-      if (!reduce.matches) {
-        ledClock += dt;
-        if (ledClock > 0.12) {
-          ledClock = 0;
-          leds.forEach(l => {
-            if (now < sudoUntil) l.material = M.ledOn;
-            else if (Math.random() < (Sound.on ? 0.35 : 0.18)) l.material = l.material === M.ledOn ? M.ledOff : M.ledOn;
-          });
-        }
-        screenClock += dt;
-        if (screenClock > 0.09) { screenClock = 0; scroll += 1.6; drawScreen(); }
-      } else if (now < sudoUntil) leds.forEach(l => { l.material = M.ledOn; });
-
-      const lt = now < sudoUntil ? 1 : 0;
-      lockLift += (lt - lockLift) * Math.min(1, dt * 6);
-      shackle.position.y = 0.42 + lockLift * 0.16;
-      shackle.rotation.y = lockLift * 0.7;
-
-      const d = new Date();
-      const sec = d.getUTCSeconds() + d.getUTCMilliseconds() / 1000;
-      const min = d.getUTCMinutes() + sec / 60;
-      const hr = ((d.getUTCHours() + 8) % 12) + min / 60; // Singapore is UTC+8, no DST
-      hS.rotation.z = -sec / 60 * Math.PI * 2;
-      hM.rotation.z = -min / 60 * Math.PI * 2;
-      hH.rotation.z = -hr / 12 * Math.PI * 2;
     }
 
     function updateCamera(dt) {
@@ -1685,7 +1493,8 @@ html.has-cursor .cursor{display:block}
       if (!entered && warmed) { requestAnimationFrame(frame); return; }
       warmed = true;
       if (hoverDirty && !drag && entered) { hoverDirty = false; hoverObj = pickAt(pointer.x, pointer.y); }
-      if (overCanvas && fine.matches) setCursorLabel(drag && drag.moved ? 'Look' : (hoverObj ? hoverObj.userData.label : ''));
+      updateHoverMarks();
+      if (overCanvas && fine.matches) { const dm = !!(drag && drag.moved); setCursor(!!hoverObj && !dm, hoverObj && !dm && (hoverObj.userData.kind === 'section' || hoverObj.userData.kind === 'examine') ? hoverObj.userData.label : '', dm); }
       else if (!fine.matches) canvas.style.cursor = hoverObj ? 'pointer' : '';
       updateCamera(dt);
       updateObjects(t / 1000, dt);
@@ -1699,11 +1508,12 @@ html.has-cursor .cursor{display:block}
       renderer.setRenderTarget(null);
       post.uniforms.tDiffuse.value = rt.texture;
       post.uniforms.tNormal.value = nrt.texture;
-      post.uniforms.tDepth.value = nrt.depthTexture;
-      post.uniforms.boil.value = reduce.matches ? 0 : 1;
+      post.uniforms.boil.value = 0;
       post.uniforms.time.value = reduce.matches ? 0 : (t * 0.001) % 100;
+      post.uniforms.vhs.value = reduce.matches ? 0 : 1;
       renderer.render(postScene, postCam);
       placeTags();
+      placeCompass();
       requestAnimationFrame(frame);
     }
     updateLens();
@@ -1718,7 +1528,7 @@ html.has-cursor .cursor{display:block}
         lensGoal = userLens;
         if (reduce.matches) { yaw = HOME.yaw; pitch = HOME.pitch; lensC = userLens; }
       },
-      sudo() { sudoUntil = performance.now() / 1000 + 3.5; },
+      sudo() {},
       resize() { renderer.setSize(innerWidth, innerHeight, false); sizeRT(); updateLens(); if (view !== 'overview') setView(view, true); },
       redraw
     };
@@ -1727,7 +1537,7 @@ html.has-cursor .cursor{display:block}
   /* =================== WINDOWS =================== */
   let z = 20, cascade = 0;
   const winFor = id => $('#win-' + id);
-  const tagFor = id => $(`.tag[data-win="${id}"]`);
+  const tagFor = id => $(`.navi[data-win="${id}"]`);
   const hudBottom = () => hud.offsetTop + hud.offsetHeight + 6;
   function topOpen() {
     return wins.filter(w => !w.hidden).sort((a, b) => (+b.style.zIndex || 0) - (+a.style.zIndex || 0))[0] || null;
@@ -1747,8 +1557,8 @@ html.has-cursor .cursor{display:block}
     } else {
       w.style.maxHeight = '';
       const ww = w.offsetWidth, wh = w.offsetHeight;
-      const x = sw - ww - 32 - n * 22;
-      const y = top + 8 + n * 22;
+      const x = 16 + n * 18;
+      const y = top + 10 + n * 18;
       w.style.left = clamp(x, 12, Math.max(12, sw - ww - 20)) + 'px';
       w.style.top = clamp(y, 8, Math.max(8, sh - wh - 16)) + 'px';
     }
@@ -1797,6 +1607,20 @@ html.has-cursor .cursor{display:block}
     tag.addEventListener('focus', () => World.hoverTag(id));
     tag.addEventListener('blur', () => World.hoverTag(null));
   });
+
+  $$('.navi').forEach(n => {
+    const id = n.dataset.win;
+    n.addEventListener('click', () => toggleWin(id));
+    n.addEventListener('pointerenter', () => { World.hoverTag(id); Sound.sfx('tick'); });
+    n.addEventListener('pointerleave', () => World.hoverTag(null));
+    n.addEventListener('focus', () => World.hoverTag(id));
+    n.addEventListener('blur', () => World.hoverTag(null));
+  });
+  $('#brand').addEventListener('click', () => {
+    wins.filter(w => !w.hidden).forEach(w => closeWin(w));
+    World.setView('overview', true);
+  });
+  canvas.addEventListener('pointerdown', () => { setTimeout(() => $('#hint').classList.add('gone'), 2500); }, { once: true });
 
   wins.forEach(w => {
     const bar = $('.win-bar', w);
@@ -1863,7 +1687,7 @@ html.has-cursor .cursor{display:block}
     if (!entered || e.metaKey || e.ctrlKey || e.altKey || e.key.length !== 1) return;
     typed = (typed + e.key.toLowerCase()).slice(-8);
     if (typed.endsWith('sudo')) { typed = ''; granted(); }
-    else if (typed.endsWith('whoami')) { typed = ''; openWin('about'); }
+    else if (typed.endsWith('whoami')) { typed = ''; openWin('education'); }
   });
 
   /* =================== CUSTOM CURSOR =================== */
@@ -1875,10 +1699,8 @@ html.has-cursor .cursor{display:block}
       cur.style.opacity = 1;
       overCanvas = e.target === canvas;
       if (!overCanvas) {
-        const t = e.target && e.target.closest ? e.target.closest('[data-cursor]') : null;
-        let label = t ? t.dataset.cursor : '';
-        if (t && t.classList.contains('tag') && t.getAttribute('aria-expanded') === 'true') label = 'Close';
-        setCursorLabel(label);
+        const t = e.target && e.target.closest ? e.target.closest('button, a, [data-cursor]') : null;
+        setCursor(!!t, '', false);
       }
     }, { passive: true });
     root.addEventListener('mouseleave', () => { cur.style.opacity = 0; });
@@ -1922,7 +1744,7 @@ html.has-cursor .cursor{display:block}
     Sound.sfx('boot');
     stage.inert = false;
     stage.removeAttribute('inert');
-    setCursorLabel('');
+    setCursor(false, '', false);
     measureStage();
     World.enter();
     boot.classList.add('gone');
