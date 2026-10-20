@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Jiwoo Ha: an illustrated 360° room you can look around. Projects, about and contact inside.">
+<title>Jiwoo's Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Brush+Script&text=%ED%95%98%EC%A7%80%EC%9A%B0&display=swap">
+<style>
+/* Layout follows balmingtiger.com: a full-screen 360 room, a fixed menu of equal columns across the top
+   (16px bold labels, a 1px white rule under each), a frosted panel that drops under the chosen item,
+   and a single sound icon bottom-right. */
+:root{
+  --black:#000;
+  --white:#fff;
+  --soft:rgba(255,255,255,.72);
+  --shadow:rgba(64,64,64,.6);
+  --panel:rgba(121,121,121,.1);
+  --font:"Inter Tight","Helvetica Neue",Helvetica,Arial,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;overflow:hidden;background:var(--black);color:var(--white);font-family:var(--font);font-size:14px;font-weight:500;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:inherit}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:1px solid var(--white);outline-offset:3px}
+[hidden]{display:none!important}
+
+#view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none}
+#view.grab{cursor:grabbing}
+
+/* pill buttons, as on balmingtiger.com */
+.pill{display:inline-flex;align-items:center;padding:2px 6px;border:.8px solid var(--white);border-radius:2px;font-size:11px;font-weight:500;text-transform:uppercase;line-height:1.4;white-space:nowrap;transition:background .2s,color .2s}
+.pill:hover{background:var(--white);color:var(--black)}
+
+/* ---------- Gate ---------- */
+.gate{
+  position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;
+  background:#0B0B0A;
+  padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  transition:opacity 1.2s ease;
+}
+.gate.gone{opacity:0;pointer-events:none}
+.gate .mark{font-family:"Nanum Brush Script",serif;font-size:88px;line-height:.9;color:#E9DCC3}
+.gate h1{margin:0;font-weight:700;font-size:16px;letter-spacing:.32em;text-transform:uppercase}
+.gate .sub{margin:-6px 0 0;color:var(--soft);font-size:13px;font-style:italic}
+.status{margin-top:40px;min-height:70px;display:flex;flex-direction:column;align-items:center;gap:10px;font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
+.status small{font-weight:500;font-size:13px}
+.enter{padding:4px 10px;border:1px solid var(--white);border-radius:4px;font-weight:700;font-size:15px;text-transform:uppercase;transition:background .2s,color .2s}
+.enter:hover{background:var(--white);color:var(--black)}
+
+/* ---------- Menu (balmingtiger.com: looping 5-up slider) ---------- */
+
+.nav{position:fixed;top:0;left:20px;right:20px;z-index:6;overflow:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:2px;--gap:16px}
+.track{display:flex;will-change:transform}
+.track.anim{transition:transform .6s cubic-bezier(.25,.1,.25,1)}
+.nav button{position:relative;flex:0 0 calc((100% - 4 * var(--gap)) / 5);margin-right:var(--gap);display:block;padding:28px 0 15px;font-size:16px;font-weight:700;line-height:1.15;color:var(--white);white-space:nowrap}
+.nav button span{pointer-events:none;text-shadow:var(--shadow) 1px 1px 1px}
+.nav button .st{font-weight:inherit}
+.nav button .line{position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--white);box-shadow:var(--shadow) 1px 1px 1px}
+
+/* ---------- Panel ---------- */
+.panel{
+  position:fixed;z-index:5;top:calc(80px + env(safe-area-inset-top,0px));left:20px;width:330px;max-width:calc(100vw - 40px);
+  background:rgba(90,80,75,.28);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);overflow:hidden;
+  height:0;opacity:0;transition:height .4s ease-out,opacity .4s ease-out;
+}
+.panel.open{opacity:1}
+.panel .back{position:absolute;top:10px;left:10px;z-index:1;display:flex;align-items:center;padding:8px;border-radius:6px;background:rgba(150,150,150,.55);-webkit-backdrop-filter:blur(100px);backdrop-filter:blur(100px);font-size:12px;font-weight:700;line-height:1.15}
+.panel .inner{padding:53px 15px 15px;display:flex;flex-direction:column;max-height:min(800px,calc(100vh - 120px));overflow:auto;overscroll-behavior:contain;box-sizing:border-box}
+.entry{margin-bottom:30px}
+.entry:last-child{margin-bottom:0}
+.entry .t{display:block;margin:6px 0 5px;font-size:14px;line-height:1.4;font-weight:700;text-transform:uppercase;text-shadow:rgba(40,40,40,.35) 1px 1px 1px}
+.entry .d{text-shadow:rgba(40,40,40,.35) 1px 1px 1px}
+.entry .d{font-size:12px;line-height:1.4;color:var(--white)}
+.entry .btns{display:flex;flex-wrap:wrap}
+.entry .btns .pill{margin-top:11px;margin-right:10px}
+.entry dl{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;margin:0;font-size:12px;line-height:1.4}
+.entry dt{font-weight:700}
+.entry dd{margin:0;color:var(--soft)}
+
+/* ---------- Labels in the room ---------- */
+.pins{position:fixed;inset:0;z-index:3;pointer-events:none}
+.pin{position:absolute;left:0;top:0;pointer-events:auto;will-change:transform;text-shadow:var(--shadow) 1px 1px 1px;box-shadow:var(--shadow) 1px 1px 1px;transition:opacity .35s,background .2s,color .2s}
+.pin[aria-expanded="true"],.pin[aria-pressed="true"]{background:var(--white);color:var(--black);text-shadow:none}
+.pin.off{opacity:0;pointer-events:none}
+
+/* ---------- Corner icons ---------- */
+.ctrls{position:fixed;z-index:5;right:max(20px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));display:flex;gap:6px}
+.ic{width:40px;height:40px;display:grid;place-items:center;color:var(--white);filter:drop-shadow(var(--shadow) 1px 1px 1px)}
+.ic svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.hint{position:fixed;z-index:4;left:max(20px,env(safe-area-inset-left,0px));bottom:calc(30px + env(safe-area-inset-bottom,0px));margin:0;font-size:12px;text-shadow:var(--shadow) 1px 1px 1px;transition:opacity .6s}
+.hint.gone{opacity:0}
+
+.fallback{position:fixed;inset:0;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-right,0px)) 24px max(16px,env(safe-area-inset-left,0px));text-align:center;font-size:15px}
+
+@media (max-width:720px){
+  .nav{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px))}
+  .nav button{font-size:12px;padding:15px 0 8px}
+  .panel{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));width:auto;max-width:none;top:auto;bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+  .panel .inner{max-height:46vh}
+  .hint{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+}
+/* phones: Balming Tiger moves the menu to the bottom, centred, without the rules */
+@media (max-width:570px){
+  .nav{top:auto;bottom:calc(20px + env(safe-area-inset-bottom,0px));padding-top:0}
+  .nav button{text-align:center}
+  .nav button span{text-shadow:rgb(64,64,64) 1px 1px 1px}
+  .nav button .line{display:none}
+  .nav button .st{display:none}
+  .ctrls{bottom:auto;top:calc(12px + env(safe-area-inset-top,0px))}
+  .hint{bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){ .gate,.panel,.track.anim{transition:none} }
+
+/* trailing custom cursor */
+@media (hover:hover) and (pointer:fine){ #view{cursor:none} #view.grab{cursor:none} }
+.cursor{position:fixed;left:0;top:0;z-index:7;width:14px;height:14px;margin:-7px 0 0 -7px;border:1.5px solid #fff;border-radius:50%;pointer-events:none;opacity:0;box-shadow:rgba(64,64,64,.6) 1px 1px 1px;transition:opacity .2s,width .25s,height .25s,margin .25s,background .25s}
+.cursor.on{opacity:1}
+.cursor.hot{width:30px;height:30px;margin:-15px 0 0 -15px;background:rgba(255,220,120,.18)}
+@media (hover:none){ .cursor{display:none} }
+</style>
+</head>
+<body>
+<canvas id="view" tabindex="0" role="img" aria-label="An illustrated little flat seen through a fisheye lens. Ahead is a media wall with dark wood slats, a TV showing a green terminal, a small wood stove with a fire, a log store and a tall bookshelf. To the left are a pink cabinet with a record player and a window seat, then tall curtained windows. A green sofa faces the TV across a pale rug and coffee table. Behind you are a square dining table with two benches under a calligraphy scroll. To the right are a hallway with stairs and a kitchen with a breakfast bar, two stools and a red phone. Drag or use the arrow keys to look around."></canvas>
+
+<nav class="nav" aria-label="Sections"><div class="track" id="track">
+  <button data-go="projects" aria-expanded="false" aria-controls="panel"><span>PROJECTS</span><i class="line"></i></button>
+  <button data-go="about" aria-expanded="false" aria-controls="panel"><span>ABOUT</span><i class="line"></i></button>
+  <button data-go="skills" aria-expanded="false" aria-controls="panel"><span>SKILLS</span><i class="line"></i></button>
+  <button data-go="contact" aria-expanded="false" aria-controls="panel"><span>CONTACT</span><i class="line"></i></button>
+  <button data-go="lights" aria-pressed="false"><span class="lightsLbl">LIGHTS <b class="st">ON</b></span><i class="line"></i></button>
+</div></nav>
+
+<section class="panel" id="panel" role="dialog" aria-label="Section" hidden><button class="back" id="back">BACK</button><div class="inner" id="panelBody"></div></section>
+
+
+<div class="cursor" id="cursor" aria-hidden="true"></div>
+<p class="hint" id="hint">Drag to look around · Click the furniture</p>
+
+<div class="ctrls" role="group" aria-label="View controls">
+  <button class="ic" id="reset" aria-label="Look around from the start" title="Recenter"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+  <button class="ic" id="sound" aria-label="Sound on" aria-pressed="false" title="Sound"><svg viewBox="0 0 24 24" id="soundIcon"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6M21 9l-4 6"/></svg></button>
+</div>
+
+<div class="gate" id="gate">
+  <div class="mark" aria-hidden="true">하지우</div>
+  <h1>Jiwoo's Room</h1>
+  <p class="sub">someone left the lamp on</p>
+  <div class="status" id="status" role="status"><span>LOADING</span><span id="pct">0%</span></div>
+</div>
+
+<template id="t-projects">
+  <div class="entry"><span class="t">PlateLoop</span><div class="d">An AI tray scanner that measures food served, eaten and left over, so canteens cook the right amount. Built for the EcoLoop sustainability hackathon in Singapore.</div><div class="btns"><a class="pill" href="https://github.com/8jiwoo/plateloop" target="_blank" rel="noopener">GitHub ↗</a></div></div>
+  <div class="entry"><span class="t">EM Services Handover Portal</span><div class="d">A full-stack web portal, built in a team of five, that makes sure work is handed over cleanly when staff join, leave or go on leave. I built the Case Records module.</div></div>
+  <div class="entry"><span class="t">Web Development Project</span><div class="d">An AI-powered platform that turns high-volume WhatsApp customer messages into trackable records. I built the Inquiry Management module.</div></div>
+</template>
+<template id="t-about">
+  <div class="entry"><span class="t">Jiwoo Ha</span><div class="d">Based in Singapore. Mostly into cybersecurity, and I like building things for the web, especially things you can poke around in. Like this room.</div></div>
+  <div class="entry"><span class="t">Elsewhere</span><div class="d">LinkedIn and GitHub are under Contact.</div></div>
+</template>
+<template id="t-skills">
+  <div class="entry"><span class="t">Languages</span><dl><dt>Korean</dt><dd>Native</dd><dt>English</dt><dd>Native</dd><dt>Chinese</dt><dd>I try my best</dd><dt>Japanese</dt><dd>JLPT N5, learning</dd></dl></div>
+  <div class="entry"><span class="t">Code</span><div class="d">Python, Java, JavaScript, SQL, HTML &amp; CSS</div></div>
+</template>
+<template id="t-contact">
+  <div class="entry"><span class="t">Email</span><div class="d" style="user-select:all">8jiwoo@gmail.com</div><div class="btns"><button class="pill" data-copy="8jiwoo@gmail.com">Copy email</button></div></div>
+  <div class="entry"><span class="t">LinkedIn</span><div class="d">jiwoohahaha</div><div class="btns"><a class="pill" href="https://www.linkedin.com/in/jiwoohahaha" target="_blank" rel="noopener">Open ↗</a></div></div>
+  <div class="entry"><span class="t">GitHub</span><div class="d">8jiwoo</div><div class="btns"><a class="pill" href="https://github.com/8jiwoo" target="_blank" rel="noopener">Open ↗</a></div></div>
+</template>
+
+<script>
+/* Jiwoo's Room, 2D edition.
+   A krpano-style tour, like balmingtiger.com: a flat illustrated 360° panorama (lights off / lights on),
+   a fisheye view (generalised perspective, fisheye 0.3, MFOV 120°, 70–140°), drag with light inertia,
+   click a thing → lookto(...) easeInOutQuart 2 s, hover → yellow glow fading in over 0.4 s.
+   No 3D scene: just two images, glow masks and a click map, drawn by one WebGL shader. */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canvas = $('#view');
+const DEG = Math.PI / 180, TAU = Math.PI * 2;
+const small = Math.min(innerWidth, innerHeight) < 600;
+const narrow = () => innerWidth < 720;
+const A = 'assets/';
+
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, premultipliedAlpha: false });
+if (!gl) {
+  canvas.hidden = true; $('#hint').hidden = true; $('#gate').hidden = true;
+  const d = document.createElement('div'); d.className = 'fallback';
+  d.textContent = 'Your browser can’t show the room. Use the menu at the top to read about me.';
+  document.body.appendChild(d);
+  throw new Error('no webgl2');
+}
+
+/* ---------- view state (krpano units: h/v/fov in radians) ---------- */
+const FISHEYE = .3;
+const FOV_HOME = 120 * DEG, FOV_MIN = 70 * DEG, FOV_MAX = 140 * DEG;
+let h = 0, v = -.28, fov = 160 * DEG, fovTarget = null;
+let tween = null, vh = 0, vv = 0, introT = -1;
+const HOME = { h: 0, v: -.28 };
+// generalised perspective projection; MFOV: the fov spans the larger screen side
+function projS(f) { const t = Math.min(f / 2, 1.55); return (FISHEYE + Math.cos(t)) / ((FISHEYE + 1) * Math.sin(t)); }
+function rToTheta(r, S) { const rho = r / (S * (FISHEYE + 1)), r2 = rho * rho, D = FISHEYE; return Math.acos(Math.max(-1, Math.min(1, (-D * r2 + Math.sqrt(1 + r2 * (1 - D * D))) / (1 + r2)))); }
+function thetaToR(t, S) { return S * (FISHEYE + 1) * Math.sin(t) / (FISHEYE + Math.cos(t)); }
+const halfSize = () => .5 * Math.max(innerWidth, innerHeight);
+function basis(hh = h, vv2 = v) {
+  const ch = Math.cos(hh), sh = Math.sin(hh), cv = Math.cos(vv2), sv = Math.sin(vv2);
+  const F = [sh * cv, sv, -ch * cv], R = [ch, 0, sh];
+  const U = [R[1] * F[2] - R[2] * F[1], R[2] * F[0] - R[0] * F[2], R[0] * F[1] - R[1] * F[0]];
+  return { F, R, U };
+}
+function screenDir(cx, cy) {
+  const m = halfSize(), px = (cx - innerWidth / 2) / m, py = (innerHeight / 2 - cy) / m, r = Math.hypot(px, py);
+  const t = rToTheta(r, projS(fov)), s = Math.sin(t), c = Math.cos(t), nx = r > 1e-6 ? px / r : 0, ny = r > 1e-6 ? py / r : 0;
+  const { F, R, U } = basis();
+  return [0, 1, 2].map(i => F[i] * c + (R[i] * nx + U[i] * ny) * s);
+}
+const dirToHV = d => [Math.atan2(d[0], -d[2]), Math.asin(Math.max(-1, Math.min(1, d[1])))];
+const clampV = x => Math.max(-88 * DEG, Math.min(88 * DEG, x));
+// krpano lookto(h, v, fov, tween(easeinoutquart, 2))
+function lookto(th, tv, tf, dur = 2) {
+  while (th - h > Math.PI) th -= TAU; while (th - h < -Math.PI) th += TAU;
+  tween = { from: [h, v, fov], to: [th, clampV(tv), tf], t: 0, dur };
+  fovTarget = null; vh = vv = 0;
+  if (reduce) { h = th; v = clampV(tv); fov = tf; tween = null; }
+}
+
+/* ---------- GL ---------- */
+const VS = `#version 300 es
+in vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
+const FS = `#version 300 es
+precision highp float;
+uniform sampler2D tOff, tOn, tGlowA, tGlowB, tTerm;
+uniform vec2 res; uniform float S, D, half_, lv, fade, time, flick;
+uniform vec3 F, R, U, eye;
+uniform vec4 gA; uniform vec2 gB;
+out vec4 o;
+vec2 eqUV(vec3 d){ return vec2(atan(d.x, -d.z) * .15915494 + .5, .5 + asin(clamp(d.y, -1.0, 1.0)) * .31830989); }
+vec3 samp(sampler2D t, vec2 uv, vec2 dx, vec2 dy){ return textureGrad(t, uv, dx, dy).rgb; }
+// a flat screen in the room: ray/plane hit → uv on that rectangle
+vec2 onRect(vec3 d, float z, vec2 c, vec2 sz){ if (d.z >= -1e-4) return vec2(-1.0); float t = (z - eye.z) / d.z; vec3 q = eye + d * t; return (q.xy - (c - sz * .5)) / sz; }
+void main(){
+  vec2 p = (gl_FragCoord.xy - .5 * res) / half_;
+  float r = length(p); vec2 n = r > 1e-6 ? p / r : vec2(0.0);
+  float rho = r / (S * (D + 1.0)), r2 = rho * rho;
+  float c = (-D * r2 + sqrt(1.0 + r2 * (1.0 - D * D))) / (1.0 + r2);
+  float s = sqrt(max(0.0, 1.0 - c * c));
+  vec3 d = normalize(F * c + (R * n.x + U * n.y) * s);
+  vec2 uv = eqUV(d);
+  // mip selection without the jump at the wrap-around seam
+  vec2 dx = dFdx(uv), dy = dFdy(uv);
+  vec2 u2 = vec2(fract(uv.x + .5), uv.y), dx2 = dFdx(u2), dy2 = dFdy(u2);
+  if (dot(dx2, dx2) + dot(dy2, dy2) < dot(dx, dx) + dot(dy, dy)) { dx = dx2; dy = dy2; }
+  vec3 col = mix(samp(tOff, uv, dx, dy), samp(tOn, uv, dx, dy), lv);
+  // the TV plays the terminal (like the video on Balming Tiger's TV)
+  vec2 tv = onRect(d, -2.456, vec2(.95, 1.32), vec2(1.04, .585));
+  if (all(greaterThan(tv, vec2(0.0))) && all(lessThan(tv, vec2(1.0)))) col = texture(tTerm, tv).rgb;
+  // the stove window flickers
+  vec2 st = onRect(d, -2.034, vec2(-.07, .57), vec2(.36, .30));
+  if (all(greaterThan(st, vec2(0.0))) && all(lessThan(st, vec2(1.0)))) { float e = smoothstep(.0, .25, min(min(st.x, 1.0 - st.x), min(st.y, 1.0 - st.y))); col *= 1.0 + e * flick * vec3(.35, .22, .08); }
+  // hover glow
+  vec3 ga = textureGrad(tGlowA, uv, dx, dy).rgb; vec2 gb = textureGrad(tGlowB, uv, dx, dy).rg;
+  float g = ga.r * gA.x + ga.g * gA.y + ga.b * gA.z + gb.r * gA.w + gb.g * gB.x;
+  col = mix(col, min(col * 1.2 + vec3(.06, .05, 0.0), 1.0), clamp(g * 1.4, 0.0, 1.0) * .5);
+  col += vec3(1.0, .84, .3) * g * .42;
+  o = vec4(col * fade, 1.0);
+}`;
+function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s)); return s; }
+const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); gl.useProgram(prog);
+const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+const U_ = {}; ['tOff', 'tOn', 'tGlowA', 'tGlowB', 'tTerm', 'res', 'S', 'D', 'half_', 'lv', 'fade', 'time', 'flick', 'F', 'R', 'U', 'eye', 'gA', 'gB'].forEach(k => { U_[k] = gl.getUniformLocation(prog, k); });
+const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
+const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
+function makeTex(unit, mip = true) {
+  const t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([20, 22, 30, 255]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  if (aniso && mip) gl.texParameterf(gl.TEXTURE_2D, aniso.TEXTURE_MAX_ANISOTROPY_EXT, Math.min(8, gl.getParameter(aniso.MAX_TEXTURE_MAX_ANISOTROPY_EXT)));
+  return t;
+}
+function upload(unit, tex, img, mip = true) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true); gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img); if (mip) gl.generateMipmap(gl.TEXTURE_2D); }
+const T = { off: makeTex(0), on: makeTex(1), ga: makeTex(2), gb: makeTex(3), term: makeTex(4, false) };
+[['tOff', 0], ['tOn', 1], ['tGlowA', 2], ['tGlowB', 3], ['tTerm', 4]].forEach(([k, u]) => gl.uniform1i(U_[k], u));
+gl.uniform3f(U_.eye, .3, 1.75, 0);   // where the panorama was taken from, for the flat screens
+
+/* ---------- loading ---------- */
+const SIZE = (maxTex >= 8192 && !small) ? '8k' : '4k';
+let loaded = 0, toLoad = 5, loadFrac = 0, failed = false;
+let ids = null, idW = 0, idH = 0;
+function loadImg(src) {
+  return new Promise((res, rej) => { const i = new Image(); i.decoding = 'async'; i.onload = () => { loaded++; loadFrac = loaded / toLoad; res(i); }; i.onerror = () => rej(src); i.src = src; });
+}
+Promise.all([loadImg(`${A}room_off_${SIZE}.jpg`), loadImg(`${A}room_on_${SIZE}.jpg`), loadImg(`${A}glow_a.png`), loadImg(`${A}glow_b.png`), loadImg(`${A}ids_2k.png`)])
+  .then(([off, on, ga, gb, id]) => {
+    upload(0, T.off, off); upload(1, T.on, on); upload(2, T.ga, ga); upload(3, T.gb, gb);
+    const c = document.createElement('canvas'); c.width = idW = id.width; c.height = idH = id.height;
+    const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(id, 0, 0); ids = x.getImageData(0, 0, idW, idH).data;
+    computeSpots();
+  })
+  .catch(src => { failed = true; console.error('Could not load', src); $('#status').innerHTML = '<small>The room couldn’t load. Please refresh, or use the menu.</small>'; gate.classList.add('gone'); setTimeout(() => { gate.hidden = true; }, 1200); });
+
+/* ---------- hotspots, from the click map (1 TV · 2 cabinet · 3 bookshelf · 4 phone · 5 lights) ---------- */
+const HOT = ['', 'projects', 'about', 'skills', 'contact', 'lights'];
+const SPOT = {};
+function idAt(d) {
+  if (!ids) return 0;
+  const u = Math.atan2(d[0], -d[2]) / TAU + .5, w = .5 + Math.asin(Math.max(-1, Math.min(1, d[1]))) / Math.PI;
+  const x = Math.min(idW - 1, Math.floor(((u % 1) + 1) % 1 * idW)), y = Math.min(idH - 1, Math.floor((1 - w) * idH));
+  return Math.round(ids[(y * idW + x) * 4] / 40);
+}
+function computeSpots() {
+  const acc = {};
+  for (let y = 0; y < idH; y += 2) for (let x = 0; x < idW; x += 2) {
+    const k = Math.round(ids[(y * idW + x) * 4] / 40); if (!k) continue;
+    const lon = (x / idW - .5) * TAU, lat = (.5 - y / idH) * Math.PI, a = acc[k] || (acc[k] = { sx: 0, sy: 0, sv: 0, n: 0, v0: 9, v1: -9, hs: [] });
+    a.sx += Math.cos(lon); a.sy += Math.sin(lon); a.sv += lat; a.n++; a.v0 = Math.min(a.v0, lat); a.v1 = Math.max(a.v1, lat); a.hs.push(lon);
+  }
+  for (const k in acc) {
+    const a = acc[k], hc = Math.atan2(a.sy, a.sx);
+    let hw = 0; a.hs.forEach(l => { let dd = l - hc; while (dd > Math.PI) dd -= TAU; while (dd < -Math.PI) dd += TAU; hw = Math.max(hw, Math.abs(dd)); });
+    const ext = Math.max(2 * hw, a.v1 - a.v0);
+    SPOT[HOT[k]] = { h: hc, v: a.sv / a.n, fov: Math.max((narrow() ? 40 : 20) * DEG, Math.min(80 * DEG, ext * (narrow() ? 3.2 : 2.2))) };
+  }
+  if (SPOT.lights) SPOT.lights = { h: 0, v: .55, fov: 90 * DEG };   // the light switch: no zoom, just a look up
+}
+
+/* ---------- glow (alpha tweens, 0.4 s power1.inOut, like hoverInTV) ---------- */
+const glow = { projects: 0, about: 0, skills: 0, contact: 0, lights: 0 }, glowT = { ...glow }, glowP = { ...glow };
+let hoverId = null;
+function setHover(id) {
+  if (id === hoverId) return; hoverId = id;
+  for (const k in glowT) glowT[k] = k === id ? 1 : 0;
+  cursorEl.classList.toggle('hot', !!id);
+}
+
+/* ---------- terminal on the TV ---------- */
+const term = document.createElement('canvas'); term.width = 768; term.height = 432; const tx = term.getContext('2d');
+const TERM = ['$ whoami', 'jiwoo', '$ nmap -sV localhost', '22/tcp   open  ssh', '443/tcp  open  https', '$ cat todo.txt', '- finish ctf writeup', '- water the plant', '$ sudo make tea', 'brewing...'];
+let termChars = 0, termHold = 0, cursorOn = true, blinkT = 0;
+function drawTerm() {
+  tx.fillStyle = '#0B3B22'; tx.fillRect(0, 0, 768, 432);
+  const g = tx.createRadialGradient(384, 216, 0, 384, 216, 520); g.addColorStop(0, 'rgba(60,170,100,.35)'); g.addColorStop(1, 'rgba(0,0,0,.35)'); tx.fillStyle = g; tx.fillRect(0, 0, 768, 432);
+  tx.fillStyle = '#8CFFB4'; tx.font = '600 30px ui-monospace, Menlo, Consolas, monospace'; tx.textBaseline = 'top';
+  let left = termChars; const shown = [];
+  for (const t of TERM) { if (left <= 0) break; shown.push(t.slice(0, left)); left -= t.length + 1; }
+  const vis = shown.slice(Math.max(0, shown.length - 8));
+  vis.forEach((t, i) => tx.fillText(t, 30, 26 + i * 46));
+  if (cursorOn) { const last = vis[vis.length - 1] || '', full = TERM[shown.length - 1] || ''; const typing = last.length < full.length;
+    const cx = typing ? 34 + tx.measureText(last).width : 30, cy = typing ? 26 + (vis.length - 1) * 46 : 26 + Math.min(8, vis.length) * 46; tx.fillRect(cx, cy, 18, 32); }
+  upload(4, T.term, term, false);
+}
+drawTerm();
+
+/* ---------- input ---------- */
+const pointers = new Map(); let moved = 0, pinch0 = 0, fov0 = fov, lastX = 0, lastY = 0, lastT = 0;
+const radPerPx = () => 1 / (projS(fov) * halfSize());
+function touched() { if (introT >= 0 && introT < 1) introT = 1; hideHint(); }
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  canvas.classList.add('grab'); tween = null; vh = vv = 0; moved = 0; touched();
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); fov0 = fov; }
+});
+canvas.addEventListener('pointermove', e => {
+  moveCursor(e);
+  const p = pointers.get(e.pointerId);
+  if (!p) { if (e.pointerType !== 'touch') setHover(introT >= 0 ? HOT[idAt(screenDir(e.clientX, e.clientY))] || null : null); return; }
+  const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+  if (pointers.size === 2) { const [a, b] = [...pointers.values()]; const d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch0 && d) { fov = Math.max(FOV_MIN, Math.min(FOV_MAX, fov0 * pinch0 / d)); fovTarget = null; } }
+  else { const k = radPerPx(); h -= dx * k; v = clampV(v + dy * k); vh = -dx * k; vv = dy * k; moved += Math.abs(dx) + Math.abs(dy); }
+  touched();
+});
+function up(e) {
+  if (e.type === 'pointerup' && pointers.has(e.pointerId) && pointers.size === 1 && moved < 8 && introT >= 0) {
+    const id = HOT[idAt(screenDir(e.clientX, e.clientY))];
+    if (id) { if (e.pointerType === 'touch') { setHover(id); setTimeout(() => { if (hoverId === id && openId !== id) setHover(null); }, 900); } go(id); }
+    else if (openId) { closePanel(); }
+  }
+  // a drag while a section is open closes it and eases back out (like Balming Tiger's onDragEnd)
+  if (e.type === 'pointerup' && moved >= 8 && openId) closePanel();
+  pointers.delete(e.pointerId); if (pointers.size < 2) pinch0 = 0; if (!pointers.size) canvas.classList.remove('grab');
+}
+canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
+canvas.addEventListener('pointerleave', () => setHover(null));
+canvas.addEventListener('wheel', e => { e.preventDefault(); tween = null; const dy = e.deltaMode === 1 ? e.deltaY * 33 : e.deltaY; fovTarget = Math.max(FOV_MIN, Math.min(FOV_MAX, (fovTarget ?? fov) * Math.exp(dy * .0011))); touched(); }, { passive: false });
+const keys = new Set();
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closePanel(); return; }
+  if (introT < 0) return;
+  if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key) && (e.target === canvas || e.target === document.body)) { keys.add(e.key); e.preventDefault(); touched(); }
+  if (e.key === '+' || e.key === '=') { fovTarget = Math.max(FOV_MIN, (fovTarget ?? fov) / 1.15); touched(); }
+  if (e.key === '-' || e.key === '_') { fovTarget = Math.min(FOV_MAX, (fovTarget ?? fov) * 1.15); touched(); }
+});
+addEventListener('keyup', e => keys.delete(e.key));
+$('#reset').addEventListener('click', () => { touched(); closePanel(); lookto(HOME.h, HOME.v, FOV_HOME); });
+const hint = $('#hint'); let hintGone = false;
+function hideHint() { if (hintGone || moved < 40) return; hintGone = true; hint.classList.add('gone'); }
+if (matchMedia('(hover: none)').matches) hint.textContent = 'Drag to look around · Tap the furniture';
+
+/* ---------- custom cursor that trails the pointer ---------- */
+const cursorEl = $('#cursor'); let cx = -100, cy = -100, ctx2 = -100, cty = -100;
+function moveCursor(e) { if (e.pointerType === 'touch') return; ctx2 = e.clientX; cty = e.clientY; cursorEl.classList.add('on'); }
+document.addEventListener('pointermove', moveCursor);
+document.addEventListener('pointerleave', () => cursorEl.classList.remove('on'));
+
+/* ---------- lights ---------- */
+let lightsOn = false, lv = 0;
+function setLights(on) {
+  lightsOn = on;
+  $$('.lightsLbl').forEach(l => { l.innerHTML = 'LIGHTS <b class="st">' + (on ? 'OFF' : 'ON') + '</b>'; });
+  $$('[data-go="lights"]').forEach(b => b.setAttribute('aria-pressed', on ? 'true' : 'false'));
+  Snd.click();
+}
+// focus a hotspot (from the menu or a click), like clickTV(): lookto(..., fov 20/40, easeinoutquart, 2)
+function focusSpot(id) {
+  const s = SPOT[id]; if (!s) return;
+  let vt = s.v;
+  if (narrow()) {   // on phones the panel covers the lower half: frame the object above it
+    const ph = Math.min(panelBody.scrollHeight || innerHeight * .46, innerHeight * .46 + 70);
+    const freeTop = innerHeight - 60 - ph, dy = innerHeight / 2 - Math.max(70, freeTop / 2);
+    if (dy > 0) vt -= rToTheta(dy / halfSize(), projS(s.fov));
+  }
+  lookto(s.h, vt, s.fov);
+}
+function unfocus() { if (introT >= 1) lookto(h, v, FOV_HOME); }
+
+/* ---------- loop ---------- */
+const ease4 = t => t < .5 ? 8 * t ** 4 : 1 - Math.pow(-2 * t + 2, 4) / 2;
+const ease3 = t => t < .5 ? 4 * t ** 3 : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const ease1 = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+let last = performance.now(), fade = 0;
+function resize() {
+  const pr = Math.min(devicePixelRatio || 1, small ? 2 : 1.75);
+  canvas.width = Math.round(innerWidth * pr); canvas.height = Math.round(innerHeight * pr);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  sizePanel();
+}
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now; const t = now / 1000;
+  if (introT >= 0 && introT < 1) {   // intro: fov 160 → 120, 2 s power3.inOut
+    introT = Math.min(1, introT + dt / 2); fov = (160 + (120 - 160) * ease3(introT)) * DEG;
+  } else if (tween) {
+    tween.t = Math.min(1, tween.t + dt / tween.dur); const q = ease4(tween.t);
+    h = tween.from[0] + (tween.to[0] - tween.from[0]) * q; v = tween.from[1] + (tween.to[1] - tween.from[1]) * q; fov = tween.from[2] + (tween.to[2] - tween.from[2]) * q;
+    if (tween.t >= 1) tween = null;
+  } else if (!pointers.size && Math.abs(vh) + Math.abs(vv) > 1e-6) {   // draginertia, mousefriction 0.8
+    h += vh; v = clampV(v + vv); const f = Math.pow(.8, dt * 60); vh *= f; vv *= f;
+  }
+  if (fovTarget != null && !tween) { fov += (fovTarget - fov) * (1 - Math.pow(.9, dt * 60)); if (Math.abs(fovTarget - fov) < 1e-4) { fov = fovTarget; fovTarget = null; } }
+  if (keys.size) { const sp = dt * 1.2; if (keys.has('ArrowLeft')) h -= sp; if (keys.has('ArrowRight')) h += sp; if (keys.has('ArrowUp')) v = clampV(v + sp); if (keys.has('ArrowDown')) v = clampV(v - sp); tween = null; }
+  // lights: 0.75 s blend between the two panoramas (krpano OPENBLEND 0.75)
+  lv += (lightsOn ? 1 : -1) * dt / .75; lv = Math.max(0, Math.min(1, lv));
+  for (const k in glowP) { const tg = (openId === k ? 1 : glowT[k]); glowP[k] = tg > glowP[k] ? Math.min(tg, glowP[k] + dt / .4) : Math.max(tg, glowP[k] - dt / .4); glow[k] = ease1(glowP[k]); }
+  if (!reduce) {
+    termHold -= dt; blinkT += dt;
+    const total = TERM.reduce((a, s2) => a + s2.length + 1, 0);
+    let dirty = false;
+    if (termHold <= 0) { if (termChars < total) { termChars++; const ch = TERM.join('\n')[termChars - 1]; termHold = ch === '\n' ? .6 + Math.random() * .8 : .05 + Math.random() * .09; } else { termHold = 6; termChars = 0; } dirty = true; }
+    if (blinkT > .55) { blinkT = 0; cursorOn = !cursorOn; dirty = true; }
+    if (dirty) drawTerm();
+  }
+  const flick = reduce ? 0 : .5 + .5 * Math.sin(t * 9.1) * .6 + .3 * Math.sin(t * 23.7) + (Math.random() - .5) * .3;
+  fade = introT < 0 ? .35 : Math.min(1, fade + dt * .8);
+  cx += (ctx2 - cx) * Math.min(1, dt * 18); cy += (cty - cy) * Math.min(1, dt * 18); cursorEl.style.transform = `translate(${cx}px,${cy}px)`;
+  const { F, R, U } = basis();
+  gl.uniform2f(U_.res, canvas.width, canvas.height); gl.uniform1f(U_.half_, .5 * Math.max(canvas.width, canvas.height));
+  gl.uniform1f(U_.S, projS(fov)); gl.uniform1f(U_.D, FISHEYE); gl.uniform1f(U_.lv, lv); gl.uniform1f(U_.fade, fade); gl.uniform1f(U_.time, t); gl.uniform1f(U_.flick, flick);
+  gl.uniform3f(U_.F, ...F); gl.uniform3f(U_.R, ...R); gl.uniform3f(U_.U, ...U);
+  gl.uniform4f(U_.gA, glow.projects, glow.about, glow.skills, glow.contact); gl.uniform2f(U_.gB, glow.lights, 0);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  requestAnimationFrame(frame);
+}
+
+/* ================================ SOUND ================================ */
+const Snd = (() => {
+  let ctx = null, master = null, on = false;
+  function init() {
+    if (ctx) return true;
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return false;
+    try { ctx = new AC(); } catch (e) { return false; }
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    // a soft room echo shared by everything
+    const verb = ctx.createDelay(1.5); verb.delayTime.value = .38; const fb = ctx.createGain(); fb.gain.value = .42; const vlp = ctx.createBiquadFilter(); vlp.type = 'lowpass'; vlp.frequency.value = 1800;
+    verb.connect(vlp); vlp.connect(fb); fb.connect(verb); const wet = ctx.createGain(); wet.gain.value = .5; vlp.connect(wet); wet.connect(master);
+    // gentle rain/wind outside: soft brown noise that slowly breathes
+    const len = ctx.sampleRate * 3, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+    let last = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + .02 * w) / 1.02; d[i] = last * 3.5; }
+    const air = ctx.createBufferSource(); air.buffer = buf; air.loop = true;
+    const alp = ctx.createBiquadFilter(); alp.type = 'lowpass'; alp.frequency.value = 900;
+    const ag = ctx.createGain(); ag.gain.value = .1; air.connect(alp); alp.connect(ag); ag.connect(master); air.start();
+    const alfo = ctx.createOscillator(); alfo.frequency.value = .05; const alg = ctx.createGain(); alg.gain.value = .04; alfo.connect(alg); alg.connect(ag.gain); alfo.start();
+    // warm pad: a quiet major-seventh chord that swells very slowly
+    const padF = ctx.createBiquadFilter(); padF.type = 'lowpass'; padF.frequency.value = 1100; padF.connect(master); padF.connect(verb);
+    [174.61, 220.0, 261.63, 329.63].forEach((f, i) => {
+      [-3, 3].forEach(det => {
+        const o = ctx.createOscillator(); o.type = 'triangle'; o.frequency.value = f; o.detune.value = det;
+        const g = ctx.createGain(); g.gain.value = .012;
+        const lfo = ctx.createOscillator(); lfo.frequency.value = .03 + i * .011; const lg = ctx.createGain(); lg.gain.value = .009;
+        lfo.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(padF); o.start(); lfo.start();
+      });
+    });
+    // now and then, a soft chime
+    const notes = [523.25, 587.33, 659.25, 783.99, 880.0, 1046.5];
+    (function chime() {
+      if (on) {
+        const f = notes[Math.floor(Math.random() * notes.length)], t0 = ctx.currentTime;
+        const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = f;
+        g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(.022, t0 + .02); g.gain.exponentialRampToValueAtTime(.0001, t0 + 3.5);
+        o.connect(g); g.connect(master); g.connect(verb); o.start(t0); o.stop(t0 + 3.6);
+      }
+      setTimeout(chime, 5000 + Math.random() * 9000);
+    })();
+    // the stove: a few quiet, far-apart crackles
+    const nb = ctx.createBuffer(1, ctx.sampleRate * .04, ctx.sampleRate), nd = nb.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1) * (1 - i / nd.length);
+    (function crackle() {
+      if (on) {
+        const s2 = ctx.createBufferSource(); s2.buffer = nb;
+        const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1200 + Math.random() * 1500; bp.Q.value = 1.5;
+        const g = ctx.createGain(); g.gain.value = .012 + Math.random() * .025;
+        s2.connect(bp); bp.connect(g); g.connect(master); s2.start();
+      }
+      setTimeout(crackle, 400 + Math.random() * 1600);
+    })();
+    return true;
+  }
+  function set(v) {
+    if (v && !init()) return false;
+    on = !!v; if (!ctx) return on;
+    if (on && ctx.resume) ctx.resume();
+    master.gain.setTargetAtTime(on ? .5 : 0, ctx.currentTime, 1.2);
+    return on;
+  }
+  function click() {
+    if (!on || !ctx) return;
+    const o = ctx.createOscillator(), g = ctx.createGain(); o.type = 'sine'; o.frequency.value = 880;
+    g.gain.setValueAtTime(.02, ctx.currentTime); g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + .12);
+    o.connect(g); g.connect(master); o.start(); o.stop(ctx.currentTime + .13);
+  }
+  document.addEventListener('visibilitychange', () => { if (!ctx) return; if (document.hidden) ctx.suspend(); else if (on) ctx.resume(); });
+  return { set, click, get on() { return on; } };
+})();
+const soundBtn = $('#sound');
+function syncSound(v) {
+  soundBtn.setAttribute('aria-pressed', v ? 'true' : 'false');
+  soundBtn.setAttribute('aria-label', v ? 'Sound off' : 'Sound on');
+  $('#soundIcon').innerHTML = v ? '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/>' : '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l4 6M21 9l-4 6"/>';
+}
+soundBtn.addEventListener('click', () => syncSound(Snd.set(!Snd.on)));
+
+/* ================================ MENU SLIDER + PANEL ================================ */
+const panel = $('#panel'), panelBody = $('#panelBody'), track = $('#track');
+// second copy of the items so the row can loop round like Balming Tiger's
+const realBtns = $$('#track > button');
+realBtns.forEach(b => { const c = b.cloneNode(true); c.tabIndex = -1; c.setAttribute('aria-hidden', 'true'); c.classList.add('dup'); track.appendChild(c); });
+let openId = null, sliding = false;
+function slideToFront(id) {
+  const items = $$('#track > button:not(.dup)');
+  const i = items.findIndex(b => b.dataset.go === id);
+  if (i <= 0 || sliding) return;
+  const step = items[1].getBoundingClientRect().left - items[0].getBoundingClientRect().left;
+  sliding = true;
+  if (reduce) { finish(); return; }
+  track.classList.add('anim'); track.style.transform = `translateX(${-step * i}px)`;
+  track.addEventListener('transitionend', finish, { once: true });
+  setTimeout(() => { if (sliding) finish(); }, 900);
+  function finish() {
+    if (!sliding) return;
+    const all = $$('#track > button'), n = items.length;
+    const reals = all.filter(b => !b.classList.contains('dup')), dups = all.filter(b => b.classList.contains('dup'));
+    const rot = a => a.slice(i).concat(a.slice(0, i));
+    track.classList.remove('anim'); track.style.transform = '';
+    rot(reals).forEach(b => track.appendChild(b)); rot(dups).forEach(b => track.appendChild(b));
+    sliding = false;
+  }
+}
+function sizePanel() { if (openId) panel.style.height = $('#panelBody').scrollHeight + 'px'; }
+function go(id) {
+  touched();
+  if (id === 'lights') { setLights(!lightsOn); return; }
+  if (openId === id) { closePanel(); return; }
+  const was = openId; openId = id;
+  slideToFront(id);
+  const fill = () => {
+    panelBody.replaceChildren($('#t-' + id).content.cloneNode(true));
+    panel.setAttribute('aria-label', id.toUpperCase());
+    panelBody.scrollTop = 0; sizePanel();
+  };
+  if (was) { panel.classList.remove('open'); setTimeout(() => { if (openId === id) { fill(); panel.classList.add('open'); } }, 250); }
+  else { panel.hidden = false; panel.style.height = '0px'; fill(); requestAnimationFrame(() => { panel.classList.add('open'); sizePanel(); }); }
+  $$('[data-go]').forEach(b => { if (b.dataset.go !== 'lights') b.setAttribute('aria-expanded', b.dataset.go === id ? 'true' : 'false'); });
+  focusSpot(id);
+  Snd.click();
+}
+function closePanel() {
+  if (!openId) return;
+  const was = openId; openId = null;
+  unfocus();
+  panel.classList.remove('open'); panel.style.height = '0px';
+  setTimeout(() => { if (!openId) panel.hidden = true; }, 420);
+  $$('[data-go]').forEach(b => { if (b.dataset.go !== 'lights') b.setAttribute('aria-expanded', 'false'); });
+  const back = $(`.nav button:not(.dup)[data-go="${was}"]`); if (back) back.focus({ preventScroll: true });
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (b) go(b.dataset.go); });
+$('#back').addEventListener('click', closePanel);
+panel.addEventListener('click', e => {
+  const b = e.target.closest('[data-copy]'); if (!b) return;
+  const done = () => { b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy email'; }, 1600); };
+  const sel = () => { const v = b.closest('.entry').querySelector('.d'), s = getSelection(), r = document.createRange(); r.selectNodeContents(v); s.removeAllRanges(); s.addRange(r); b.textContent = 'Press Ctrl+C'; };
+  try { navigator.clipboard.writeText(b.dataset.copy).then(done, sel); } catch (err) { sel(); }
+});
+
+/* ================================ GATE ================================ */
+const gate = $('#gate'), pctEl = $('#pct'), status = $('#status');
+let fontsReady = false, pct = 0;
+function showEnter() {
+  status.innerHTML = "<small>Best experienced with your device's audio enabled.</small><button class=\"enter\" id=\"enter\">Click to enter</button>";
+  $('#enter').addEventListener('click', enter); $('#enter').focus({ preventScroll: true });
+}
+function enter() {
+  if (introT >= 0) return;
+  syncSound(Snd.set(true));
+  introT = reduce ? 1 : 0; if (reduce) fov = FOV_HOME;
+  gate.classList.add('gone');
+  setTimeout(() => { gate.hidden = true; canvas.focus({ preventScroll: true }); }, 1300);
+}
+(function count() {
+  if (failed) return;
+  const target = Math.min(100, (fontsReady ? 10 : 0) + loadFrac * 90);
+  pct += (target - pct) * .12; if (target - pct < .5) pct = target;
+  pctEl.textContent = Math.floor(pct) + '%';
+  if (pct >= 100) { setTimeout(showEnter, 200); return; }
+  requestAnimationFrame(count);
+})();
+const wait = (p, ms) => Promise.race([p, new Promise(r => setTimeout(r, ms))]).catch(() => {});
+wait(document.fonts.load('80px "Nanum Brush Script"', '하지우'), 3000).then(() => { fontsReady = true; });
+resize(); addEventListener('resize', resize);
+requestAnimationFrame(frame);
+window.__room = { set(hh, vv2, f) { h = hh; v = vv2; fov = f; introT = 1; fade = 1; tween = null; gate.hidden = true; }, lights: setLights, ready: () => loadFrac >= 1 };
+</script>
+</body>
+</html>
