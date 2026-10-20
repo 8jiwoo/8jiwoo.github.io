@@ -26,12 +26,16 @@ The menu along the top does the same thing. Turn the sound on (bottom right) for
 
 ## How it's made
 
-- **[three.js](https://threejs.org)**: the whole room is built in code, in a single `index.html`
-- **Fisheye lens**: the room is rendered into a 360° cube map, then bent through a custom shader
-- **PS2-era look**: simple low-poly geometry wrapped in photographic textures, baked vertex lighting, blob shadows and linear fog
-- **Small touches**: drifting fog, swaying curtains, a clock showing the real time, and a terminal that types itself
+- **360° panorama**: the room is two 8192×4096 equirectangular images, lights off and lights on (4096 on phones), shown through a fisheye lens and crossfaded when you flip the lights. That's the same idea as Balming Tiger's krpano tour.
+- **Live layers pinned on top**: the fire, the typing terminal on the TV, the clock hands, the curtains, lamp glows and the hover outlines are real 3D objects at their true positions. They line up with the photo as you look around, and hide correctly behind furniture.
+- **Built with [three.js](https://threejs.org)** in a single `index.html`. No framework and no build step.
+- **The panorama comes from the room itself**: the low-poly room with photographic textures is rendered once into the two images. `index.html#live` shows that room rendered in real time, which is also the automatic fallback if the images fail to load. `index.html#bake` exposes the tool that produces new images.
 
-No build step and no framework. Just open `index.html` from a local server.
+### Using a real 360° photo
+
+To swap in a photographed room, shoot it from the middle of the room at about 1.2–1.7 m: a 2:1 equirectangular JPEG, ideally 8192×4096, with no visible seam, once with the lamps off and once with them on. Save them as `assets/room_off_8k.jpg` and `room_on_8k.jpg`, plus 4096×2048 `_4k` versions. Then move the hotspot shapes to match the photo, or use the `LAYERS` list in `index.html` to pin photos, posters or notes at a yaw and pitch.
+
+### Run it locally
 
 ```bash
 python3 -m http.server

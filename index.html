@@ -251,6 +251,14 @@ function stains(x, w, h, n, a, col = '70,45,20') {
 
 /* ---------- textures ---------- */
 const A = 'assets/';
+/* The room is shown as a 360° panorama (two equirectangular images: lights off / lights on), like a krpano tour.
+   Moving and clickable parts are live layers pinned on top of it at their real positions.
+   #live renders the whole room in real time instead; #bake is the tool that produces the panorama images. */
+const PANO = { off: 'room_off', on: 'room_on' };            // assets/<name>_8k.jpg and _4k.jpg (2:1 equirectangular)
+const BAKE = location.hash.includes('bake');
+let MODE = (BAKE || location.hash.includes('live')) ? 'live' : 'pano';
+const isOverlay = o => { for (let p = o; p; p = p.parent) if (p.userData.overlay) return true; return false; };
+const pin = o => { o.userData.overlay = true; return o; };
 // cartoon floorboards: warm brown planks with inked seams and a few grain strokes
 const floorMap = canvasTex(1024, 1024, (x, w, h) => {
   const cols = ['#6B4423', '#734A26', '#5E3C1F', '#7A5029', '#664020', '#704626'];
@@ -468,7 +476,7 @@ const mIron = std({ color: 0x141414, roughness: .55, metalness: .6 });
 const mCream = new THREE.MeshPhysicalMaterial({ map: photo(A + "fabric_weave.jpg", true, 2, 2), color: 0xC9BFAC, roughness: .9, sheen: .6, sheenColor: new THREE.Color(0xE0D8C8), normalMap: fabricNormal, normalScale: new THREE.Vector2(.3, .3), envMapIntensity: .3 });
 const glowMat = (map, c = 0xffffff, k = 1) => new THREE.MeshBasicMaterial({ map, color: new THREE.Color(c).multiplyScalar(k), toneMapped: false });
 const glowT = canvasTex(128, 128, (x, w, h) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); }, false);
-function halo(color, k, size, pos) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, color: new THREE.Color(color).multiplyScalar(k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); s.scale.set(size, size, 1); s.position.copy(pos); scene.add(s); return s; }
+function halo(color, k, size, pos) { const s = pin(new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, color: new THREE.Color(color).multiplyScalar(k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }))); s.scale.set(size, size, 1); s.position.copy(pos); scene.add(s); return s; }
 
 /* ---------- shell ---------- */
 const floorM = std({ map: floorMap, roughnessMap: floorRough, bumpMap: floorBump, bumpScale: 1.2, color: 0xB08A70, roughness: .75, envMapIntensity: .4 });
@@ -509,7 +517,7 @@ rbox(1.2, RH - .3, .04, mWhite, .95, (RH - .3) / 2, MZ + .02, 0, scene, .004);
 rbox(2.5, .3, .42, mWhite, .75, RH - .15, MZ + .21, 0, scene, .01);
 // TV
 const tvFrame = rbox(1.1, .64, .045, mBlack, .95, 1.32, MZ + .07, 0, scene, .01);
-const tvScreen = add(new THREE.PlaneGeometry(1.04, .585), glowMat(crtTex, 0xffffff, 1.25), .95, 1.32, MZ + .094);
+const tvScreen = pin(add(new THREE.PlaneGeometry(1.04, .585), glowMat(crtTex, 0xffffff, 1.25), .95, 1.32, MZ + .094));
 const crtLight = new THREE.PointLight(0x5BE38A, .9, 2.6, 2); crtLight.position.set(.95, 1.3, MZ + .5); scene.add(crtLight);
 const crtHalo = halo(0x5BE38A, .3, 1.4, new THREE.Vector3(.95, 1.32, MZ + .15));
 // low unit: black plinth (stove), log store, white cupboard
@@ -609,7 +617,7 @@ rbox(1.1, .04, .16, mWhite, 0, -.62, 0, 0, alcWin, .006);
 
 /* ---------- left: tall windows with curtains, radiator ---------- */
 const tw = group(LX, 1.34, .85, Math.PI / 2);
-add(new THREE.PlaneGeometry(1.8, 1.92), new THREE.MeshPhysicalMaterial({ color: 0x8090a0, roughness: .05, transparent: true, opacity: .1, metalness: .2 }), 0, 0, -.05, 0, tw);
+add(new THREE.PlaneGeometry(1.8, 1.92), new THREE.MeshBasicMaterial({ color: 0x8090a0, transparent: true, opacity: .08 }), 0, 0, -.05, 0, tw);
 [[0, .96, 1.86, .06], [0, -.96, 1.86, .06], [0, .25, 1.8, .04]].forEach(([x, y, w, h]) => rbox(w, h, .07, mWhite, x, y, -.05, 0, tw, .006));
 [-.9, -.3, .3, .9].forEach(x => rbox(.06, 1.92, .07, mWhite, x, 0, -.05, 0, tw, .006));
 const curtains = [];
@@ -619,7 +627,7 @@ const curtM = new THREE.MeshPhysicalMaterial({ map: fabricPhoto, color: 0xC4B89E
   const geo = new THREE.PlaneGeometry(.42, 2.3, 48, 8), p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) { const u = p.getX(i), v = p.getY(i); p.setZ(i, Math.sin(u * 42 + v * .3) * .035 + Math.sin(u * 15) * .015); }
   geo.computeVertexNormals();
-  add(geo, curtM, LX + .1, 1.2, z, Math.PI / 2).userData.isCurtain = true;
+  pin(add(geo, curtM, LX + .1, 1.2, z, Math.PI / 2)).userData.isCurtain = true;
   curtains.push({ geo, base: Float32Array.from(p.array), ph: z * 2.3 });
 });
 cyl(.015, .015, 2.4, 16, mBrass, LX + .08, 2.38, .85).rotation.x = Math.PI / 2;
@@ -675,7 +683,7 @@ cyl(.014, .014, 1.04, 16, mWoodDark, .68, 1.49, RD - .05).rotation.z = Math.PI /
 const clock = group(RW - .04, 1.95, 1.85, -Math.PI / 2);
 add(new THREE.CylinderGeometry(.14, .14, .04, 64), mBrass, 0, 0, 0, 0, clock).rotation.x = Math.PI / 2;
 add(new THREE.CircleGeometry(.12, 64), std({ color: 0xE6DCC4, roughness: .5 }), 0, 0, .021, 0, clock);
-const hands = [[.06, .009], [.085, .007], [.095, .003]].map(([l, w2], i) => { const pv = new THREE.Group(); pv.position.z = .025 + i * .003; clock.add(pv); rbox(w2, l, .003, i === 2 ? std({ color: 0xB8402A }) : mBlack, 0, l / 2 - .01, 0, 0, pv, .001); return pv; });
+const hands = [[.06, .009], [.085, .007], [.095, .003]].map(([l, w2], i) => { const pv = pin(new THREE.Group()); pv.position.z = .025 + i * .003; clock.add(pv); rbox(w2, l, .003, i === 2 ? std({ color: 0xB8402A }) : mBlack, 0, l / 2 - .01, 0, 0, pv, .001); return pv; });
 
 /* ---------- right: hallway with stairs ---------- */
 const HX = RW + T;
@@ -741,10 +749,10 @@ const hs = rbox(.24, .045, .06, std({ color: 0x7E2A1E, roughness: .3 }), 0, .12,
 
 /* ---------- fire (inside the stove) ---------- */
 const fireMat = new THREE.ShaderMaterial({
-  uniforms: { time: { value: 0 }, seed: { value: 0 } },
+  uniforms: { time: { value: 0 }, seed: { value: 0 }, gain: { value: 1 } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `
-    uniform float time, seed; varying vec2 vUv;
+    uniform float time, seed, gain; varying vec2 vUv;
     float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
     float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
     float fbm(vec2 p){ float v = 0.0, a = .5; for (int i = 0; i < 6; i++){ v += a * n(p); p = p * 2.07 + 13.1; a *= .5; } return v; }
@@ -758,7 +766,7 @@ const fireMat = new THREE.ShaderMaterial({
       float core = smoothstep(.35, .95, body);
       vec3 col = mix(vec3(1.0, .22, .02), vec3(1.0, .62, .18), smoothstep(.1, .6, body));
       col = mix(col, vec3(1.0, .93, .72), core);
-      gl_FragColor = vec4(col * a * 3.2, a);
+      gl_FragColor = vec4(col * a * 3.2 * gain, a);
     }`,
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false
 });
@@ -766,10 +774,10 @@ const fireMat = new THREE.ShaderMaterial({
 const fireCenter = new THREE.Vector3(-.07, .43, MZ + .3 + .209);
 const flames = [];
 [[0, .3, .26, 0], [-.08, .2, .2, 1.3], [.08, .22, .2, 2.7], [.03, .26, .24, 4.1]].forEach(([dx, w, h, s], i) => {
-  const m = fireMat.clone(); m.uniforms = { time: { value: 0 }, seed: { value: s } };
+  const m = fireMat.clone(); m.uniforms = { time: { value: 0 }, seed: { value: s }, gain: { value: MODE === 'pano' ? .5 : 1 } };
   const f = new THREE.Mesh(new THREE.PlaneGeometry(w, h), m);
   f.position.set(fireCenter.x + dx, fireCenter.y + h / 2, fireCenter.z + .0015 * i);
-  f.renderOrder = 5; scene.add(f); flames.push(f);
+  f.renderOrder = 5; pin(f); scene.add(f); flames.push(f);
 });
 const fireHalo = halo(0xFF7A2A, 1.0, .9, new THREE.Vector3(-.07, .58, MZ + .55));
 const fireLight = new THREE.PointLight(0xFF7A2A, 5, 6, 2); fireLight.position.set(-.07, .6, MZ + .65); scene.add(fireLight);
@@ -810,10 +818,13 @@ function placeModel(name, opts) {
 
 const plants = [];
 const sofaGreen = new THREE.Color(0x4E6428);
+function loadModels() {
 placeModel('GlamVelvetSofa', { x: .95, z: .2, ry: Math.PI, width: 1.85, env: .6, fabric: sofaGreen });
 placeModel('DiffuseTransmissionPlant', { x: -.78, z: 2.1, height: 1.0, env: .4, onload: w => plants.push(w) });
 placeModel('DiffuseTransmissionPlant', { x: 1.3, y: .48, z: MZ + .24, height: .32, ry: 1, env: .4, onload: w => plants.push(w) });
 placeModel('GlassVaseFlowers', { x: -RW + .38, y: .98, z: MZ + .62, height: .34, env: .8 });
+}
+if (MODE === 'live') loadModels();
 
 /* ---------- clickable furniture: glowing outline on hover ---------- */
 const OUTLINE_VS = `uniform float width; void main(){ vec4 mv = modelViewMatrix * vec4(position, 1.0); vec3 n = normalize(normalMatrix * normal); mv.xyz += n * width * max(.35, -mv.z); gl_Position = projectionMatrix * mv; }`;
@@ -900,6 +911,46 @@ toonify(scene);
 inkAuto = false;
 for (let i = 0; i < globeMats.length; i++) globeMats[i] = retroOf(globeMats[i]);
 let inkDirty = false;
+
+/* ---------- optional layers pinned to the panorama (photos, posters, CDs, notes...) ----------
+   Add entries like: { src: 'assets/poster.jpg', yaw: -40, pitch: 10, dist: 2.4, w: .5, h: .7, hot: 'about' }
+   yaw/pitch in degrees from the start view; dist in metres from the viewer; hot = section to open on click.
+   Missing images are skipped, so the room still works with none. */
+const LAYERS = [];
+function addLayer(L) {
+  new THREE.TextureLoader().load(L.src, t => {
+    t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const m = pin(new THREE.Mesh(new THREE.PlaneGeometry(L.w, L.h), new THREE.MeshBasicMaterial({ map: t, transparent: true, toneMapped: false })));
+    const y = L.yaw * DEG, p = L.pitch * DEG, d = new THREE.Vector3(-Math.sin(y) * Math.cos(p), Math.sin(p), -Math.cos(y) * Math.cos(p));
+    m.position.copy(EYE).addScaledVector(d, L.dist); m.lookAt(EYE);
+    if (L.hot) m.userData.hot = L.hot;
+    scene.add(m); pickList = null; needCapture = 2;
+  }, undefined, () => console.warn('Layer image not found, skipped:', L.src));
+}
+const depthOnly = {};
+const depthMat = side => depthOnly[side] || (depthOnly[side] = new THREE.MeshBasicMaterial({ colorWrite: false, side }));
+let panoTex = null;
+function setupPano() {
+  // the room itself is in the panorama photo: keep its geometry only as an invisible depth layer,
+  // so the live layers (fire, curtains, clock hands...) are hidden correctly behind furniture
+  scene.traverse(o => {
+    if (!(o.isMesh || o.isSprite) || o.userData.isOutline || isOverlay(o)) return;
+    if (o === outside || o === clouds) { o.visible = false; return; }
+    const m = o.material;
+    if (Array.isArray(m)) { o.material = depthMat(THREE.FrontSide); return; }
+    if (o.isSprite || m.transparent || m.depthTest === false || m.blending === THREE.AdditiveBlending || m.isShaderMaterial) { o.visible = false; return; }
+    if (m.stencilWrite) o.material = new THREE.MeshBasicMaterial({ colorWrite: false, side: m.side, stencilWrite: true, stencilRef: m.stencilRef, stencilFunc: m.stencilFunc, stencilZPass: m.stencilZPass });
+    else o.material = depthMat(m.side);
+  });
+  scene.background = null;
+  const size = renderer.capabilities.maxTextureSize >= 8192 && !small ? '8k' : '4k';
+  const tl = new THREE.TextureLoader(manager), aniso = renderer.capabilities.getMaxAnisotropy();
+  const fail = () => { if (MODE !== 'pano') return; console.warn('Panorama missing, rendering the room live instead'); location.replace(location.pathname + location.search + '#live'); location.reload(); };
+  const load = n => tl.load(A + n + '_' + size + '.jpg', t => { needCapture = 2; }, undefined, fail);
+  panoTex = { off: load(PANO.off), on: load(PANO.on) };
+  Object.values(panoTex).forEach(t => { t.anisotropy = aniso; t.wrapS = THREE.RepeatWrapping; t.minFilter = THREE.LinearMipmapLinearFilter; t.generateMipmaps = true; });
+}
+LAYERS.forEach(addLayer);
 // simple round blob shadows under furniture, like console games used
 const blobTex = canvasTex(32, 32, (x, w, h) => { const g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(0,0,0,.6)'); g.addColorStop(.55, 'rgba(0,0,0,.3)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); }, false);
 blobTex.magFilter = THREE.NearestFilter;
@@ -917,7 +968,7 @@ const lowPR = () => Math.min(window.devicePixelRatio || 1, small ? 2 : 1.5);
 renderer.setPixelRatio(lowPR());
 renderer.shadowMap.enabled = false; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
 const pmrem = new THREE.PMREMGenerator(renderer);
-new RGBELoader(manager).load(A + 'night.hdr.bin', t => { t.mapping = THREE.EquirectangularReflectionMapping; scene.environment = pmrem.fromEquirectangular(t).texture; t.dispose(); needCapture = 3; });
+if (MODE === 'live') new RGBELoader(manager).load(A + 'night.hdr.bin', t => { t.mapping = THREE.EquirectangularReflectionMapping; scene.environment = pmrem.fromEquirectangular(t).texture; t.dispose(); needCapture = 3; });
 const maxCube = renderer.capabilities.maxCubemapSize || 2048;
 let FACE = Math.min(small || location.hash === '#lo' ? 768 : 1536, maxCube);
 let cubeRT = new THREE.WebGLCubeRenderTarget(FACE, { type: THREE.HalfFloatType, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, stencilBuffer: true });
@@ -943,7 +994,7 @@ function captureInk() {
   hidden.forEach(o => { o.visible = true; });
 }
 const post = new THREE.ShaderMaterial({
-  uniforms: { tCube: { value: cubeRT.texture }, tInk: { value: inkRT.texture }, px: { value: .004 }, res: { value: new THREE.Vector2(1, 1) }, K: { value: 1 }, Rm: { value: new THREE.Matrix3() }, time: { value: 0 }, fade: { value: 0 }, expo: { value: 1.0 }, PS: { value: 1 }, PD: { value: .5 } },
+  uniforms: { tCube: { value: cubeRT.texture }, tInk: { value: inkRT.texture }, px: { value: .004 }, res: { value: new THREE.Vector2(1, 1) }, K: { value: 1 }, Rm: { value: new THREE.Matrix3() }, time: { value: 0 }, fade: { value: 0 }, expo: { value: 1.0 }, PS: { value: 1 }, PD: { value: .5 }, panoOff: { value: null }, panoOn: { value: null }, usePano: { value: 0 }, lvU: { value: 0 } },
   vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
   fragmentShader: `
     uniform samplerCube tCube, tInk; uniform vec2 res; uniform float K, time, fade, expo, px, PS, PD; uniform mat3 Rm;
@@ -953,9 +1004,29 @@ const post = new THREE.ShaderMaterial({
                  mix(mix(h3(i + vec3(0,0,1)), h3(i + vec3(1,0,1)), f.x), mix(h3(i + vec3(0,1,1)), h3(i + vec3(1,1,1)), f.x), f.y), f.z); }
     float fbm3(vec3 p){ float v = 0.0, a = .5; for (int i = 0; i < 4; i++){ v += a * n3(p); p = p * 2.03 + 7.1; a *= .5; } return v; }
     float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
-    vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0.0, 1.0); }
     vec3 look(vec2 n, float th){ return Rm * vec3(n * sin(th), -cos(th)); }
+    uniform sampler2D panoOff, panoOn; uniform float usePano, lvU;
+    vec3 panoAt(vec2 uv){
+      // mip level from screen-space derivatives, without the jump at the wrap-around seam
+      vec2 dx = dFdx(uv), dy = dFdy(uv);
+      vec2 u2 = vec2(fract(uv.x + .5), uv.y), dx2 = dFdx(u2), dy2 = dFdy(u2);
+      if (dot(dx2, dx2) + dot(dy2, dy2) < dot(dx, dx) + dot(dy, dy)) { dx = dx2; dy = dy2; }
+      return mix(textureGrad(panoOff, uv, dx, dy).rgb, textureGrad(panoOn, uv, dx, dy).rgb, lvU);
+    }
+    vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0.0, 1.0); }
     vec3 toSRGB(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - .055, step(.0031308, c)); }
+    vec3 grade(vec3 c){
+      c = toSRGB(aces(c * expo * .8));
+      float l = dot(c, vec3(.299, .587, .114));
+      c = clamp(mix(vec3(l), c, .78), 0.0, 1.0);
+      c = mix(c, c * vec3(.9, 1.02, .94), (1.0 - l) * .8);
+      c = mix(c, c * vec3(1.06, 1.0, .9), l * l);
+      c = mix(c, c * vec3(.86, .94, 1.1), .45);
+      return clamp((c - .4) * 1.1 + .4, 0.0, 1.0);
+    }
+    vec3 eqDir(vec2 uv){ float lon = (uv.x - .5) * 6.2831853, lat = (uv.y - .5) * 3.1415927; return vec3(sin(lon) * cos(lat), sin(lat), -cos(lon) * cos(lat)); }
+    vec2 eqUV(vec3 d){ return vec2(atan(d.x, -d.z) * .15915494 + .5, .5 + asin(clamp(d.y, -1.0, 1.0)) * .31830989); }
+
     void main(){
       float m = 0.5 * min(res.x, res.y);
       vec2 p = (gl_FragCoord.xy - 0.5 * res) / m;
@@ -964,24 +1035,21 @@ const post = new THREE.ShaderMaterial({
       float rho = r / (PS * (PD + 1.0)), r2 = rho * rho;
       float th = acos(clamp((-PD * r2 + sqrt(1.0 + r2 * (1.0 - PD * PD))) / (1.0 + r2), -1.0, 1.0));
       vec3 d = look(n, th);
-      vec3 col = textureCube(tCube, d).rgb;
-      col = toSRGB(aces(col * expo * .8));
+      vec3 col;
+      vec4 cap = textureCube(tCube, d);
+      if (usePano > .5) col = panoAt(eqUV(d)) * (1.0 - clamp(cap.a, 0.0, 1.0)) + grade(cap.rgb);
+      else col = grade(cap.rgb);
       // slow drifting fog wisps, anchored to the room so they float past as you look around
       vec3 q = d * 2.2 + vec3(time * .025, time * .006, -time * .018);
       float wisp = smoothstep(.42, .85, fbm3(q)) * (.55 + .45 * smoothstep(.3, -.4, d.y));
       col = mix(col, vec3(.36, .43, .5), wisp * .1);
-      float l = dot(col, vec3(.299, .587, .114));
-      col = clamp(mix(vec3(l), col, .78), 0.0, 1.0);                       // faded palette
-      col = mix(col, col * vec3(.9, 1.02, .94), (1.0 - l) * .8);            // green-tinted shadows
-      col = mix(col, col * vec3(1.06, 1.0, .9), l * l);                      // aged warm whites
-      col = mix(col, col * vec3(.86, .94, 1.1), .45);                        // keep the blue-hour mood
-      col = clamp((col - .4) * 1.1 + .4, 0.0, 1.0);
       float rc = r / (length(res) / (2.0 * m));
       col *= 1.0 - .22 * smoothstep(.45, 1.1, rc);
       gl_FragColor = vec4(col * fade, 1.0);
     }`,
   depthTest: false, depthWrite: false
 });
+if (MODE === 'pano') { setupPano(); post.uniforms.panoOff.value = panoTex.off; post.uniforms.panoOn.value = panoTex.on; post.uniforms.usePano.value = 1; }
 const postScene = new THREE.Scene();
 const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), post); quad.frustumCulled = false; postScene.add(quad);
 const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -1354,6 +1422,7 @@ function frame(now) {
   // re-capture the room every few frames (the fire and screens move); drop the face size if the machine struggles
   if (needCapture > 0 || frameNo % (small ? 4 : 3) === 0) {
     const t0 = performance.now();
+    if (MODE === 'pano') renderer.setClearColor(0x000000, 0);
     cubeCam.update(renderer, scene);
     if (needCapture > 0) needCapture--;
     if (performance.now() - t0 > 60 && ++slowFrames > 8 && FACE > 1024) {
@@ -1367,6 +1436,7 @@ function frame(now) {
   fade = introT < 0 ? .35 : Math.min(1, fade + dt * .55);
   const PJ = proj(K); post.uniforms.PS.value = PJ.S; post.uniforms.PD.value = PJ.D;
   post.uniforms.px.value = Math.max(.7 / (PJ.S * .5 * Math.min(post.uniforms.res.value.x, post.uniforms.res.value.y)), 1.05 * (Math.PI / 2) / INKFACE);
+  post.uniforms.lvU.value = lv;
   post.uniforms.K.value = K; post.uniforms.time.value = t; post.uniforms.fade.value = fade;
   const m = rot(yaw, pitch).m; post.uniforms.Rm.value.set(m[0], m[3], m[6], m[1], m[4], m[7], m[2], m[5], m[8]);
   renderer.setRenderTarget(null); renderer.render(postScene, postCam);
@@ -1402,7 +1472,49 @@ wait(Promise.all([document.fonts.load('80px "Nanum Brush Script"', '하지우'),
 manager.onLoad = () => { loadFrac = 1; };
 resize(); addEventListener('resize', resize);
 requestAnimationFrame(frame);
-window.__room = { set(y, p, k) { yaw = y; pitch = p; K = k; introT = 1; fade = 1; goal = null; gate.hidden = true; needCapture = 2; }, lights: setLights, ready: () => loadFrac >= 1 };
+async function bakePano(on, W = 8192) {
+  setLights(on); lv = on ? 1 : 0; updateLights(0, 1, 1);
+  const hidden = []; scene.traverse(o => { if (o.visible && (isOverlay(o) || o.userData.isOutline)) { hidden.push(o); o.visible = false; } });
+  const F = Math.min(renderer.capabilities.maxCubemapSize, 2048);
+  const crt = new THREE.WebGLCubeRenderTarget(F, { type: THREE.HalfFloatType, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
+  const cc = new THREE.CubeCamera(.03, 40, crt); cc.position.copy(EYE); scene.add(cc); cc.update(renderer, scene);
+  const H = W / 2, SW = W / 8;
+  const mat = new THREE.ShaderMaterial({ uniforms: { tCube: { value: crt.texture }, expo: { value: 1 }, off: { value: 0 }, W: { value: W }, H: { value: H } },
+    vertexShader: 'void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: 'uniform samplerCube tCube; uniform float expo, off, W, H;' + `
+    vec3 aces(vec3 x){ return clamp((x * (2.51 * x + .03)) / (x * (2.43 * x + .59) + .14), 0.0, 1.0); }
+    vec3 toSRGB(vec3 c){ return mix(c * 12.92, 1.055 * pow(c, vec3(1.0 / 2.4)) - .055, step(.0031308, c)); }
+    vec3 grade(vec3 c){
+      c = toSRGB(aces(c * expo * .8));
+      float l = dot(c, vec3(.299, .587, .114));
+      c = clamp(mix(vec3(l), c, .78), 0.0, 1.0);
+      c = mix(c, c * vec3(.9, 1.02, .94), (1.0 - l) * .8);
+      c = mix(c, c * vec3(1.06, 1.0, .9), l * l);
+      c = mix(c, c * vec3(.86, .94, 1.1), .45);
+      return clamp((c - .4) * 1.1 + .4, 0.0, 1.0);
+    }
+    vec3 eqDir(vec2 uv){ float lon = (uv.x - .5) * 6.2831853, lat = (uv.y - .5) * 3.1415927; return vec3(sin(lon) * cos(lat), sin(lat), -cos(lon) * cos(lat)); }
+    vec2 eqUV(vec3 d){ return vec2(atan(d.x, -d.z) * .15915494 + .5, .5 + asin(clamp(d.y, -1.0, 1.0)) * .31830989); }
+` + `
+      void main(){ vec3 c = vec3(0.0);
+        for (int i = 0; i < 4; i++) { vec2 j = vec2(i == 1 || i == 3 ? .75 : .25, i >= 2 ? .75 : .25);
+          vec2 uv = vec2((gl_FragCoord.x - .5 + j.x + off) / W, (gl_FragCoord.y - .5 + j.y) / H); c += grade(textureCube(tCube, eqDir(uv)).rgb); }
+        gl_FragColor = vec4(c * .25, 1.0); }`, depthTest: false, depthWrite: false });
+  const sc = new THREE.Scene(), q = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat); q.frustumCulled = false; sc.add(q);
+  const rt = new THREE.WebGLRenderTarget(SW, H, { type: THREE.UnsignedByteType });
+  const out = document.createElement('canvas'); out.width = W; out.height = H; const ox = out.getContext('2d');
+  const buf = new Uint8Array(SW * H * 4);
+  for (let i = 0; i < 8; i++) {
+    mat.uniforms.off.value = i * SW; renderer.setRenderTarget(rt); renderer.render(sc, postCam); renderer.readRenderTargetPixels(rt, 0, 0, SW, H, buf);
+    const img = ox.createImageData(SW, H);
+    for (let y = 0; y < H; y++) img.data.set(buf.subarray((H - 1 - y) * SW * 4, (H - y) * SW * 4), y * SW * 4);
+    ox.putImageData(img, i * SW, 0);
+  }
+  renderer.setRenderTarget(null); rt.dispose(); crt.dispose(); scene.remove(cc);
+  hidden.forEach(o => { o.visible = true; });
+  return out.toDataURL('image/jpeg', .93);
+}
+window.__room = { bake: bakePano, set(y, p, k) { yaw = y; pitch = p; K = k; introT = 1; fade = 1; goal = null; gate.hidden = true; needCapture = 2; }, lights: setLights, ready: () => loadFrac >= 1 };
 </script>
 
 </body>
