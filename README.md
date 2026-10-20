@@ -28,7 +28,7 @@ The menu along the top does the same thing. Turn the sound on (bottom right) for
 
 - **[three.js](https://threejs.org)**: the whole room is built in code, in a single `index.html`
 - **Fisheye lens**: the room is rendered into a 360° cube map, then bent through a custom shader
-- **Cartoon look**: flat cel shading plus hand-drawn-style ink outlines worked out from surface edges
+- **PS2-era look**: low-poly geometry, 15-bit nearest-filtered textures, baked vertex lighting, blob shadows, linear fog and a dithered 16-bit framebuffer
 - **Small touches**: drifting fog, swaying curtains, a clock showing the real time, and a terminal that types itself
 
 No build step and no framework. Just open `index.html` from a local server.

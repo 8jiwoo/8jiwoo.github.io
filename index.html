@@ -29,7 +29,7 @@ a{color:inherit;text-decoration:none}
 :focus-visible{outline:1px solid var(--white);outline-offset:3px}
 [hidden]{display:none!important}
 
-#view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none;cursor:grab;outline:none}
 #view.grab{cursor:grabbing}
 
 /* pill buttons, as on balmingtiger.com */
@@ -172,6 +172,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeVertices } from 'three/addons/utils/BufferGeometryUtils.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -380,22 +381,27 @@ const skyTex = canvasTex(2048, 1152, (x, w, h) => {
 });
 
 /* ================================ SCENE ================================ */
-const FOG = 0x3A4A66;
+const FOG = 0x3B4856;
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(FOG);
-scene.fog = new THREE.FogExp2(FOG, 0.34);
+scene.fog = new THREE.Fog(FOG, 1.4, 7.2);
 const std = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: .8, metalness: 0, envMapIntensity: .35 }, o));
 const meshes = [];
 function add(geo, mat, x, y, z, ry = 0, parent = scene) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.rotation.y = ry; parent.add(m); meshes.push(m); return m; }
-const rbox = (w, h, d, mat, x, y, z, ry = 0, p, r = .012) => add(new RoundedBoxGeometry(w, h, d, 3, Math.min(r, w / 2.2, h / 2.2, d / 2.2)), mat, x, y, z, ry, p);
-const cyl = (rt, rb, h, seg, mat, x, y, z, p) => add(new THREE.CylinderGeometry(rt, rb, h, seg), mat, x, y, z, 0, p);
+// PS2-style: plain boxes, a few extra segments on big ones so the vertex lighting has somewhere to live
+const segOf = v => Math.max(1, Math.min(8, Math.round(v / .45)));
+const rbox = (w, h, d, mat, x, y, z, ry = 0, p) => add(new THREE.BoxGeometry(w, h, d, segOf(w), segOf(h), segOf(d)), mat, x, y, z, ry, p);
+const cyl = (rt, rb, h, seg, mat, x, y, z, p) => add(new THREE.CylinderGeometry(rt, rb, h, Math.min(seg, Math.max(rt, rb) < .03 ? 6 : 10)), mat, x, y, z, 0, p);
 function group(x, y, z, ry = 0) { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; scene.add(g); return g; }
-function plane(w, h, mat, x, y, z, rx, ry) { const m = add(new THREE.PlaneGeometry(w, h), mat, x, y, z, 0); m.rotation.set(rx, ry, 0); return m; }
+function plane(w, h, mat, x, y, z, rx, ry) { const m = add(new THREE.PlaneGeometry(w, h, segOf(w), segOf(h)), mat, x, y, z, 0); m.rotation.set(rx, ry, 0); return m; }
 // a box whose texture tiles at a fixed real-world size on every face
 function tiledBox(w, h, d, S = 1.6) {
-  const g = new THREE.BoxGeometry(w, h, d), uv = g.attributes.uv;
-  const dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
-  for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * dims[f][0] / S, uv.getY(i) * dims[f][1] / S); }
+  const g = new THREE.BoxGeometry(w, h, d, segOf(w), segOf(h), segOf(d)), uv = g.attributes.uv, pos = g.attributes.position, nrm = g.attributes.normal;
+  for (let i = 0; i < pos.count; i++) {
+    const ax = Math.abs(nrm.getX(i)), ay = Math.abs(nrm.getY(i));
+    const px = pos.getX(i) + w / 2, py = pos.getY(i) + h / 2, pz = pos.getZ(i) + d / 2;
+    if (ax > .5) uv.setXY(i, pz / S, py / S); else if (ay > .5) uv.setXY(i, px / S, pz / S); else uv.setXY(i, px / S, py / S);
+  }
   return g;
 }
 // walls are solid boxes: x0..x1, z0..z1, y0..y1
@@ -546,7 +552,7 @@ const curtM = new THREE.MeshPhysicalMaterial({ color: 0xB8AE98, roughness: .9, s
   const geo = new THREE.PlaneGeometry(.42, 2.3, 48, 8), p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) { const u = p.getX(i), v = p.getY(i); p.setZ(i, Math.sin(u * 42 + v * .3) * .035 + Math.sin(u * 15) * .015); }
   geo.computeVertexNormals();
-  add(geo, curtM, LX + .1, 1.2, z, Math.PI / 2);
+  add(geo, curtM, LX + .1, 1.2, z, Math.PI / 2).userData.isCurtain = true;
   curtains.push({ geo, base: Float32Array.from(p.array), ph: z * 2.3 });
 });
 cyl(.015, .015, 2.4, 16, mBrass, LX + .08, 2.38, .85).rotation.x = Math.PI / 2;
@@ -703,7 +709,7 @@ const ceilFix = add(new THREE.CylinderGeometry(.22, .2, .06, 48), std({ color: 0
 const pendBulb = new THREE.MeshBasicMaterial({ color: 0x3A3328 });
 add(new THREE.CircleGeometry(.19, 48), pendBulb, .5, RH - .061, -.3).rotation.x = Math.PI / 2;
 const roomLight = new THREE.PointLight(0xFFE2B8, 0, 10, 1.6); roomLight.position.set(.5, RH - .3, -.3); scene.add(roomLight);
-const hemi = new THREE.HemisphereLight(0x87A2D6, 0x3E3A44, .8); scene.add(hemi);
+const hemi = new THREE.HemisphereLight(0x8FA6C8, 0x6A5E58, 1.4); scene.add(hemi);
 
 /* ---------- models ---------- */
 const gltf = new GLTFLoader(manager);
@@ -751,7 +757,7 @@ for (const id in HOT) {
   hotMats[id] = { mats, a: 0, p: 0, target: 0, meshes: [] };
   HOT[id].forEach(root => {
     const list = []; root.traverse(o => { if (o.isMesh && !(o.geometry.type === 'PlaneGeometry' || o.geometry.type === 'CircleGeometry')) list.push(o); });
-    list.forEach(m => hotMats[id].mats.forEach((mat, li) => { const o = new THREE.Mesh(m.geometry, mat); o.userData.isOutline = true; o.visible = false; o.renderOrder = 999 - li; o.raycast = () => {}; m.add(o); hotMats[id].meshes.push(o); }));
+    list.forEach(m => { lowPoly(m); const sg = (() => { const g = m.geometry.clone(); ['normal', 'uv', 'color'].forEach(k => g.deleteAttribute(k)); const mg = mergeVertices(g, 1e-4); mg.computeVertexNormals(); return mg; })(); hotMats[id].mats.forEach((mat, li) => { const o = new THREE.Mesh(sg, mat); o.userData.isOutline = true; o.visible = false; o.renderOrder = 999 - li; o.raycast = () => {}; m.add(o); hotMats[id].meshes.push(o); }); });
     root.traverse(o => { if (o.isMesh && !o.userData.isOutline) { const orig = o.material; o.material = (matCache.get(orig) || matCache.set(orig, orig.clone()).get(orig)); if (orig === sconceGlobeM && !globeMats.includes(o.material)) globeMats.push(o.material); Object.assign(o.material, { stencilWrite: true, stencilRef: 1, stencilFunc: THREE.AlwaysStencilFunc, stencilZPass: THREE.ReplaceStencilOp }); } });
     root.traverse(o => { o.userData.hot = id; });
   });
@@ -765,42 +771,103 @@ function pickables() {
   return pickList;
 }
 
-/* ---------- cartoon look: flat cel shading on everything ---------- */
-const toonRamp = new THREE.DataTexture(new Uint8Array([95, 160, 235]), 3, 1, THREE.RedFormat);
-toonRamp.minFilter = toonRamp.magFilter = THREE.NearestFilter; toonRamp.needsUpdate = true;
-const toonCache = new Map();
-function toonOf(m) {
+/* ---------- PS2 look: crunchy textures, Gouraud materials, baked vertex lighting ---------- */
+// textures: shrink to console-sized maps, 15-bit colour, nearest-neighbour sampling
+const DYNAMIC_TEX = new Set([crtTex, scrollTex, tvTex, glowT]);
+const crunched = new Set();
+function crunch(t, max = 256) {
+  if (!t || crunched.has(t)) return t; crunched.add(t);
+  t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestMipmapNearestFilter; t.anisotropy = 1;
+  const img = t.image; if (DYNAMIC_TEX.has(t) || !img || !img.width) { t.needsUpdate = true; return t; }
+  const k = Math.min(1, max / Math.max(img.width, img.height));
+  const w = Math.max(8, Math.round(img.width * k)), h = Math.max(8, Math.round(img.height * k));
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  try {
+    x.drawImage(img, 0, 0, w, h);
+    const id = x.getImageData(0, 0, w, h), p = id.data;
+    const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const o = (j * w + i) * 4, dd = (B[(j & 3) * 4 + (i & 3)] / 16 - .5) * 8;
+      for (let ch = 0; ch < 3; ch++) p[o + ch] = Math.max(0, Math.min(255, Math.round((p[o + ch] + dd) / 8) * 8)); }
+    x.putImageData(id, 0, 0);
+    t.image = c; t.needsUpdate = true;
+  } catch (e) { t.needsUpdate = true; }
+  return t;
+}
+const TEX_SIZE = new Map([[floorMap, 256], [plasterTex, 128], [ceilTex, 64], [rugTex, 128], [woodMap, 128], [skyTex, 512]]);
+// geometry: cap the smoothness of round things
+function lowPoly(o) {
+  const g = o.geometry, P = g.parameters; if (!P || o.userData.keepGeo) return;
+  let ng = null;
+  if (g.type === 'CylinderGeometry' && P.radialSegments > 10) ng = new THREE.CylinderGeometry(P.radiusTop, P.radiusBottom, P.height, Math.max(P.radiusTop, P.radiusBottom) < .03 ? 6 : 10, 1, P.openEnded);
+  else if (g.type === 'SphereGeometry' && P.widthSegments > 8) ng = new THREE.SphereGeometry(P.radius, 8, 6, P.phiStart, P.phiLength, P.thetaStart, P.thetaLength);
+  else if (g.type === 'TorusGeometry' && P.tubularSegments > 12) ng = new THREE.TorusGeometry(P.radius, P.tube, 4, 10, P.arc);
+  else if (g.type === 'CircleGeometry' && P.segments > 12) ng = new THREE.CircleGeometry(P.radius, 12);
+  if (ng) { o.geometry = ng; g.dispose(); }
+}
+// "baked" lighting: darken vertices near the floor, ceiling and walls, with greenish shadows
+const _v = new THREE.Vector3(), _n = new THREE.Vector3();
+function bake(o) {
+  const g = o.geometry, pos = g.attributes.position; if (!pos || g.attributes.color) return;
+  o.updateWorldMatrix(true, false);
+  const col = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count; i++) {
+    _v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld);
+    const up = g.attributes.normal ? _n.fromBufferAttribute(g.attributes.normal, i).transformDirection(o.matrixWorld).y : 0;
+    let ao = up > .7 ? .92 : .6 + .4 * Math.min(1, Math.max(0, _v.y / 1.0));
+    ao *= 1 - .22 * Math.min(1, Math.max(0, (_v.y - (RH - .6)) / .6));
+    const dw = Math.min(Math.abs(_v.x + RW), Math.abs(_v.x - RW), Math.abs(_v.z + RD), Math.abs(_v.z - RD));
+    ao *= .74 + .26 * Math.min(1, dw / .7);
+    const fl = Math.min(1, Math.max(0, _v.y / .12)); if (up <= .7) ao *= .85 + .15 * fl;           // contact darkening right at the floor
+    col[i * 3] = Math.pow(ao, 1.12); col[i * 3 + 1] = ao; col[i * 3 + 2] = Math.pow(ao, 1.2);
+  }
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+}
+const retroCache = new Map();
+function retroOf(m) {
   if (!m || !(m.isMeshStandardMaterial)) return m;
-  if (toonCache.has(m)) return toonCache.get(m);
-  const t = new THREE.MeshToonMaterial({ color: m.color, map: m.map, gradientMap: toonRamp, emissive: m.emissive, emissiveMap: m.emissiveMap, emissiveIntensity: m.emissiveIntensity, transparent: m.transparent, opacity: m.opacity, side: m.side, alphaTest: m.alphaTest, alphaMap: m.alphaMap, depthTest: m.depthTest, depthWrite: m.depthWrite, vertexColors: m.vertexColors,
+  if (retroCache.has(m)) return retroCache.get(m);
+  const map = m.map ? crunch(m.map, TEX_SIZE.get(m.map) || 256) : null;
+  const t = new THREE.MeshLambertMaterial({ color: m.color, map, emissive: m.emissive, emissiveMap: m.emissiveMap, emissiveIntensity: m.emissiveIntensity, transparent: m.transparent, opacity: m.opacity, side: m.side, alphaTest: m.alphaTest, alphaMap: m.alphaMap ? crunch(m.alphaMap, 128) : null, depthTest: m.depthTest, depthWrite: m.depthWrite, vertexColors: true,
     stencilWrite: m.stencilWrite, stencilRef: m.stencilRef, stencilFunc: m.stencilFunc, stencilZPass: m.stencilZPass });
   if (m.sheenColor && m.sheen > 0 && m.color) t.color = m.color.clone().lerp(m.sheenColor, .15);
-  toonCache.set(m, t); return t;
+  if (m.metalness > .5) t.color = t.color.clone().multiplyScalar(1.25);   // brass reads brighter without real reflections
+  retroCache.set(m, t); return t;
 }
-function toonify(root) { root.traverse(o => { if (o.isMesh && !o.userData.isOutline) { o.material = Array.isArray(o.material) ? o.material.map(toonOf) : toonOf(o.material); } }); }
+function toonify(root) { root.traverse(o => { if (o.isMesh && !o.userData.isOutline) {
+  const ms = Array.isArray(o.material) ? o.material : [o.material];
+  if (ms.some(x => x && x.isMeshStandardMaterial)) { if (!o.userData.isCurtain) lowPoly(o); bake(o); }
+  o.material = Array.isArray(o.material) ? o.material.map(retroOf) : retroOf(o.material);
+  if (!o.material.isMeshLambertMaterial && o.material.map) crunch(o.material.map, TEX_SIZE.get(o.material.map) || 256);
+} }); }
 toonify(scene);
-for (let i = 0; i < globeMats.length; i++) globeMats[i] = toonOf(globeMats[i]);
-let inkDirty = true;
+for (let i = 0; i < globeMats.length; i++) globeMats[i] = retroOf(globeMats[i]);
+let inkDirty = false;
+// simple round blob shadows under furniture, like console games used
+const blobTex = canvasTex(32, 32, (x, w, h) => { const g = x.createRadialGradient(16, 16, 0, 16, 16, 16); g.addColorStop(0, 'rgba(0,0,0,.6)'); g.addColorStop(.55, 'rgba(0,0,0,.3)'); g.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); }, false);
+blobTex.magFilter = THREE.NearestFilter;
+const blobM = new THREE.MeshBasicMaterial({ map: blobTex, color: 0x0C1210, transparent: true, depthWrite: false, opacity: .85 });
+[[.95, .2, 2.0, 1.1], [.95, -.8, .9, .65], [.68, 1.95, 2.0, 1.4], [-1.71, -2.15, .75, 1.0], [-1.71, -1.1, .7, 1.45], [.4, -2.3, 2.5, .65], [2.3, .3, 1.3, .55], [-.78, 2.1, .65, .65], [1.78, -2.37, .5, .45]].forEach(([x, z, w, d]) => { const b = new THREE.Mesh(new THREE.PlaneGeometry(w, d), blobM); b.rotation.x = -Math.PI / 2; b.position.set(x, .016, z); b.renderOrder = 1; scene.add(b); });
 
 /* ---------- shadows ---------- */
-meshes.forEach(m => { if (m.material && (m.material.isMeshStandardMaterial)) { m.castShadow = true; m.receiveShadow = true; } });
+/* PS2-era: no shadow maps, see blob shadows + vertex bake above */
 rug.castShadow = false;
-[fireLight, lampLight, kitchenLight].forEach(l => { l.castShadow = true; l.shadow.mapSize.set(small ? 512 : 1024, small ? 512 : 1024); l.shadow.bias = -.002; l.shadow.normalBias = .02; l.shadow.radius = 6; });
-moon.castShadow = true; moon.shadow.mapSize.set(2048, 2048); Object.assign(moon.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: .5, far: 16 }); moon.shadow.camera.updateProjectionMatrix(); moon.shadow.bias = -.0015;
+[].forEach(l => { l.castShadow = true; l.shadow.mapSize.set(small ? 512 : 1024, small ? 512 : 1024); l.shadow.bias = -.002; l.shadow.normalBias = .02; l.shadow.radius = 6; });
+moon.castShadow = false; moon.shadow.mapSize.set(16, 16); Object.assign(moon.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: .5, far: 16 }); moon.shadow.camera.updateProjectionMatrix(); moon.shadow.bias = -.0015;
 
 /* ================================ 360 CAPTURE + LENS ================================ */
-const LINES = small ? 640 : 820; const lowPR = () => Math.min(1, LINES / innerHeight);
+const LINES = 460; const lowPR = () => Math.min(1, LINES / Math.min(innerWidth, innerHeight)) * (small ? 1.6 : 1);
 renderer.setPixelRatio(lowPR());
-renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
+renderer.shadowMap.enabled = false; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
 const pmrem = new THREE.PMREMGenerator(renderer);
 new RGBELoader(manager).load(A + 'night.hdr.bin', t => { t.mapping = THREE.EquirectangularReflectionMapping; scene.environment = pmrem.fromEquirectangular(t).texture; t.dispose(); needCapture = 3; });
 const maxCube = renderer.capabilities.maxCubemapSize || 2048;
-let FACE = Math.min(small || location.hash === '#lo' ? 512 : 1024, maxCube);
-let cubeRT = new THREE.WebGLCubeRenderTarget(FACE, { type: THREE.HalfFloatType, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, stencilBuffer: true });
+let FACE = Math.min(small || location.hash === '#lo' ? 384 : 512, maxCube);
+let cubeRT = new THREE.WebGLCubeRenderTarget(FACE, { type: THREE.HalfFloatType, generateMipmaps: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, stencilBuffer: true });
 let cubeCam = new THREE.CubeCamera(.03, 40, cubeRT);
 cubeCam.position.copy(EYE); scene.add(cubeCam);
 // a second capture of the room storing surface direction + distance, used to draw the ink lines
-const INKFACE = Math.min(small || location.hash === '#lo' ? 768 : 1536, maxCube);
+const INKFACE = 16;   // ink outlines are off in the PS2 look
 const inkRT = new THREE.WebGLCubeRenderTarget(INKFACE, { type: THREE.HalfFloatType, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter });
 const inkCam = new THREE.CubeCamera(.03, 40, inkRT); inkCam.position.copy(EYE); scene.add(inkCam);
 const inkMat = new THREE.ShaderMaterial({
@@ -841,29 +908,21 @@ const post = new THREE.ShaderMaterial({
       float th = acos(clamp((-PD * r2 + sqrt(1.0 + r2 * (1.0 - PD * PD))) / (1.0 + r2), -1.0, 1.0));
       vec3 d = look(n, th);
       vec3 col = textureCube(tCube, d).rgb;
-      col = toSRGB(aces(col * expo * .5));
-      // ink: compare surface direction and distance with a ring of neighbours
-      vec3 t1 = normalize(cross(d, abs(d.y) < .99 ? vec3(0.0, 1.0, 0.0) : vec3(1.0, 0.0, 0.0)));
-      vec3 t2 = cross(d, t1);
-      vec4 c0 = textureCube(tInk, d);
-      float e = 0.0;
-      for (int i = 0; i < 8; i++) {
-        float a = float(i) * .7853982;
-        vec4 ci = textureCube(tInk, normalize(d + (t1 * cos(a) + t2 * sin(a)) * px));
-        float nd = 1.0 - smoothstep(.55, .82, dot(c0.xyz, ci.xyz));
-        float dz = smoothstep(.03, .07, abs(c0.w - ci.w) / max(min(c0.w, ci.w), .05));
-        e = max(e, max(nd, dz));
-      }
-      col = mix(col, vec3(.16, .1, .07), e * .78);
+      col = toSRGB(aces(col * expo * .8));
       // slow drifting fog wisps, anchored to the room so they float past as you look around
       vec3 q = d * 2.2 + vec3(time * .025, time * .006, -time * .018);
       float wisp = smoothstep(.42, .85, fbm3(q)) * (.55 + .45 * smoothstep(.3, -.4, d.y));
-      col = mix(col, vec3(.36, .43, .58), wisp * .2);
+      col = mix(col, vec3(.36, .43, .5), wisp * .1);
       float l = dot(col, vec3(.299, .587, .114));
-      col = clamp(mix(vec3(l), col, .74), 0.0, 1.0);
-      col = mix(col, col * vec3(.8, .92, 1.15), .8);
-      col = mix(col, vec3(.16, .24, .4), .12);
-      col = clamp((col - .42) * 1.14 + .42, 0.0, 1.0);
+      col = clamp(mix(vec3(l), col, .78), 0.0, 1.0);                       // faded palette
+      col = mix(col, col * vec3(.9, 1.02, .94), (1.0 - l) * .8);            // green-tinted shadows
+      col = mix(col, col * vec3(1.06, 1.0, .9), l * l);                      // aged warm whites
+      col = mix(col, col * vec3(.86, .94, 1.1), .45);                        // keep the blue-hour mood
+      col = clamp((col - .4) * 1.1 + .4, 0.0, 1.0);
+      // 16-bit framebuffer: 5 bits per channel with a 4x4 ordered dither
+      vec2 dp = mod(floor(gl_FragCoord.xy), 4.0);
+      float b4 = (mod(dp.x + dp.y * 2.0, 4.0) * 4.0 + mod(dp.y + dp.x * 3.0, 4.0) + .5) / 16.0;
+      col = floor(col * 31.0 + b4) / 31.0;
       float rc = r / (length(res) / (2.0 * m));
       col *= 1.0 - .22 * smoothstep(.45, 1.1, rc);
       gl_FragColor = vec4(col * fade, 1.0);
@@ -986,8 +1045,8 @@ function updateLights(dt, flick = 1, k = 1) {
   kitchenLight.intensity = 1.5 * lv * k; tubeM.color.setHex(0xDFF5E8).multiplyScalar(.12 + 1.5 * lv * k); tubeHalo.material.opacity = lv * k;
   barLight.intensity = 1.1 * lv; pendGlow.color.setHex(0xFFD8A0).multiplyScalar(.15 + 2 * lv); barHalo.material.opacity = lv;
   hallLight.intensity = .35 * lv;
-  scene.fog.density = .34 - .08 * lv;
-  hemi.intensity = .8 + .2 * lv;
+  scene.fog.far = 7.2 + 3 * lv; scene.fog.near = 1.4 + 1 * lv;
+  hemi.intensity = 1.4 + .4 * lv;
 }
 
 /* ================================ SOUND ================================ */
@@ -1242,7 +1301,6 @@ function frame(now) {
   // re-capture the room every few frames (the fire and screens move); drop the face size if the machine struggles
   if (needCapture > 0 || frameNo % (small ? 4 : 3) === 0) {
     const t0 = performance.now();
-    if (inkDirty) { captureInk(); inkDirty = false; }
     cubeCam.update(renderer, scene);
     if (needCapture > 0) needCapture--;
     if (performance.now() - t0 > 60 && ++slowFrames > 8 && FACE > 1024) {
