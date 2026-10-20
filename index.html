@@ -269,17 +269,21 @@ const floorMap = canvasTex(2048, 2048, (x, w, h) => {
 const woodMap = canvasTex(1024, 1024, (x, w, h) => { x.fillStyle = '#B07A48'; x.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(${rnd() < .5 ? '90,50,20' : '210,160,110'},${rnd() * .12})`; x.fillRect(rnd() * w, rnd() * h, 30 + rnd() * 90, 2); } x.strokeStyle = 'rgba(70,40,18,.5)'; x.lineWidth = 3; for (let i = 0; i < 34; i++) { const y0 = rnd() * h; x.beginPath(); x.moveTo(0, y0); x.bezierCurveTo(w * .3, y0 + (rnd() - .5) * 40, w * .7, y0 + (rnd() - .5) * 40, w, y0 + (rnd() - .5) * 20); x.stroke(); } }), woodRough = null, woodBump = null;
 // old painted plaster: tired off-white with damp stains
 // cartoon wallpaper: cream with mustard ornaments and little blue flowers
-const plasterTex = canvasTex(1024, 1024, (x, w, h) => {
-  x.fillStyle = '#D6C09C'; x.fillRect(0, 0, w, h);
-  const orn = (cx, cy, s) => { x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = '#C99A3C';
-    [-1, 1].forEach(sd => { x.save(); x.scale(sd, 1); x.beginPath(); x.moveTo(0, 40); x.bezierCurveTo(40, 30, 64, -10, 44, -46); x.bezierCurveTo(32, -16, 16, 6, 0, 12); x.fill(); x.beginPath(); x.moveTo(0, -12); x.bezierCurveTo(24, -26, 30, -62, 8, -78); x.bezierCurveTo(14, -58, 8, -40, 0, -36); x.fill(); x.beginPath(); x.arc(52, -50, 8, 0, TAU); x.fill(); x.restore(); });
-    x.beginPath(); x.ellipse(0, 4, 10, 26, 0, 0, TAU); x.fill(); x.beginPath(); x.moveTo(0, -100); x.lineTo(12, -84); x.lineTo(0, -68); x.lineTo(-12, -84); x.fill();
-    x.strokeStyle = 'rgba(110,70,20,.55)'; x.lineWidth = 2.2; x.beginPath(); x.ellipse(0, 4, 10, 26, 0, 0, TAU); x.stroke(); x.beginPath(); x.moveTo(0, -100); x.lineTo(12, -84); x.lineTo(0, -68); x.lineTo(-12, -84); x.closePath(); x.stroke(); x.fillStyle = 'rgba(255,240,200,.5)'; x.beginPath(); x.ellipse(-3, -4, 3, 10, 0, 0, TAU); x.fill(); x.restore(); };
-  const flower = (cx, cy, s) => { x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = '#7FA6C9'; for (let k = 0; k < 6; k++) { x.save(); x.rotate(k / 6 * TAU); x.beginPath(); x.ellipse(0, -14, 7, 12, 0, 0, TAU); x.fill(); x.restore(); } x.fillStyle = '#5A84AE'; x.beginPath(); x.arc(0, 0, 6, 0, TAU); x.fill(); x.restore(); };
-  for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { const ox = (j % 2) * 128; orn(i * 256 + 128 + ox - 64, j * 256 + 140, 1); flower(i * 256 + ox, j * 256 + 20, 1); }
-  for (let i = 0; i < 9000; i++) { x.fillStyle = `rgba(150,110,60,${rnd() * .06})`; x.fillRect(rnd() * w, rnd() * h, 2, 2); }
-  for (let i = 0; i < 700; i++) { x.strokeStyle = `rgba(120,85,40,${.04 + rnd() * .06})`; x.lineWidth = 1; const fx = rnd() * w, fy = rnd() * h; x.beginPath(); x.moveTo(fx, fy); x.lineTo(fx + (rnd() - .5) * 30, fy + (rnd() - .5) * 30); x.stroke(); }
-  for (let i = 0; i < w; i += 256) { x.fillStyle = 'rgba(90,60,25,.07)'; x.fillRect(i, 0, 3, h); }
+const plasterTex = canvasTex(512, 512, (x, w, h) => {
+  x.fillStyle = '#F2CFA6'; x.fillRect(0, 0, w, h);
+  const ink = '#7A4A1C';
+  const damask = (cx, cy, s) => { x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = '#D9A441'; x.strokeStyle = ink; x.lineWidth = 3 / s; x.lineJoin = 'round';
+    const half = sd => { x.save(); x.scale(sd, 1); x.beginPath();
+      x.moveTo(0, -62); x.bezierCurveTo(10, -46, 22, -40, 34, -44); x.bezierCurveTo(30, -30, 20, -22, 10, -18);
+      x.bezierCurveTo(30, -18, 46, -6, 48, 12); x.bezierCurveTo(36, 6, 22, 6, 12, 12);
+      x.bezierCurveTo(18, 26, 18, 42, 8, 56); x.lineTo(0, 64); x.closePath(); x.fill(); x.stroke(); x.restore(); };
+    half(1); half(-1);
+    x.fillStyle = '#F2CFA6'; x.beginPath(); x.ellipse(0, 4, 6, 14, 0, 0, TAU); x.fill(); x.stroke(); x.restore(); };
+  const flower = (cx, cy, s) => { x.save(); x.translate(cx, cy); x.scale(s, s); x.strokeStyle = '#3E5A86'; x.lineWidth = 2;
+    [[0, -9], [9, 0], [0, 9], [-9, 0]].forEach(([px, py]) => { x.fillStyle = '#86A9CF'; x.beginPath(); x.arc(px, py, 7, 0, TAU); x.fill(); x.stroke(); });
+    x.fillStyle = '#F2CFA6'; x.beginPath(); x.arc(0, 0, 4, 0, TAU); x.fill(); x.stroke(); x.restore(); };
+  for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) { damask(i * 256 + 128, j * 256 + 128, 1.2); flower(i * 256, j * 256, 1.1); flower(i * 256 + 256, j * 256, 1.1); flower(i * 256, j * 256 + 256, 1.1); }
+  for (let i = 0; i < 2500; i++) { x.fillStyle = `rgba(150,90,40,${rnd() * .07})`; x.fillRect(rnd() * w, rnd() * h, 2, 2); }
 }, true);
 const plasterNormal = null;
 const ceilTex = canvasTex(512, 512, (x, w, h) => { x.fillStyle = '#B88878'; x.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { x.strokeStyle = `rgba(${rnd() < .5 ? '140,90,75' : '215,170,150'},${.08 + rnd() * .1})`; x.lineWidth = 3 + rnd() * 6; const sx = rnd() * w, sy = rnd() * h; x.beginPath(); x.moveTo(sx, sy); x.quadraticCurveTo(sx + 30, sy + (rnd() - .5) * 20, sx + 60 + rnd() * 60, sy + (rnd() - .5) * 10); x.stroke(); } for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(200,110,80,${rnd() * .08})`; x.fillRect(rnd() * w, rnd() * h, 3, 3); } });
@@ -346,7 +350,6 @@ const skyTex = canvasTex(2048, 1152, (x, w, h) => {
   // moon + glow
   const mx = w * .3, my = h * .17;
   let g = x.createRadialGradient(mx, my, 0, mx, my, 260); g.addColorStop(0, 'rgba(200,215,240,.0)'); g.addColorStop(.15, 'rgba(200,215,240,0)'); g.addColorStop(1, 'rgba(200,215,240,0)'); x.fillStyle = g; x.fillRect(mx - 260, my - 260, 520, 520);
-  for (let i = 0; i < 70; i++) { x.fillStyle = `rgba(230,236,250,${.3 + rnd() * .5})`; x.fillRect(rnd() * w, rnd() * h * .35, 2, 2); }
     // thin cloud streaks
   for (let i = 0; i < 26; i++) { const cy = h * (.08 + rnd() * .42), cx = rnd() * w, cw = 200 + rnd() * 700; const c = x.createLinearGradient(cx, 0, cx + cw, 0); const a = .04 + rnd() * .08; c.addColorStop(0, 'rgba(90,110,160,0)'); c.addColorStop(.5, `rgba(90,110,160,${a * 1.2})`); c.addColorStop(1, 'rgba(90,110,160,0)'); x.fillStyle = c; x.fillRect(cx, cy, cw, 6 + rnd() * 18); }
   // sodium glow over the city
@@ -365,12 +368,11 @@ const skyTex = canvasTex(2048, 1152, (x, w, h) => {
     }
     const f = x.createLinearGradient(0, base - maxH, 0, base); f.addColorStop(0, `rgba(70,95,145,${haze * .5})`); f.addColorStop(1, `rgba(90,115,165,${haze})`); x.fillStyle = f; x.fillRect(0, base - maxH - 40, w, h);
   };
-  layer(HZ, 40, 150, '#2E4370', .3, .45, 70);
-  layer(HZ + 70, 80, 260, '#1F2F52', .16, .75, 110);
-  layer(HZ + 170, 120, 360, '#131D36', .06, 1, 170);
+  layer(HZ, 40, 150, '#2E4370', .3, 0, 70);
+  layer(HZ + 70, 80, 260, '#1F2F52', .16, 0, 110);
+  layer(HZ + 170, 120, 360, '#131D36', .06, 0, 170);
   // street haze and lamps far below
   g = x.createLinearGradient(0, HZ + 120, 0, h); g.addColorStop(0, 'rgba(20,30,55,0)'); g.addColorStop(1, 'rgba(14,20,38,.85)'); x.fillStyle = g; x.fillRect(0, HZ + 120, w, h);
-  for (let i = 0; i < 18; i++) { const lx = rnd() * w, ly = HZ + 230 + rnd() * 160; const lg = x.createRadialGradient(lx, ly, 0, lx, ly, 46); lg.addColorStop(0, 'rgba(255,205,140,.8)'); lg.addColorStop(.2, 'rgba(255,195,130,.25)'); lg.addColorStop(1, 'rgba(255,190,120,0)'); x.fillStyle = lg; x.fillRect(lx - 46, ly - 46, 92, 92); }
   // a utility pole and sagging wires close by
   x.fillStyle = '#0B1122'; x.fillRect(w * .62, h * .18, 16, h); x.fillRect(w * .62 - 70, h * .24, 156, 8); x.fillRect(w * .62 - 50, h * .3, 116, 6);
   x.strokeStyle = 'rgba(10,16,32,.9)'; x.lineWidth = 3;
@@ -406,13 +408,17 @@ function tiledBox(w, h, d, S = 1.6) {
 }
 // walls are solid boxes: x0..x1, z0..z1, y0..y1
 const wallM = std({ map: plasterTex, roughness: .92 });
-const wall = (x0, x1, z0, z1, y0 = 0, y1 = RH, m = wallM) => add(tiledBox(x1 - x0, y1 - y0, z1 - z0, 1.1), m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+const wall = (x0, x1, z0, z1, y0 = 0, y1 = RH, m = wallM) => add(tiledBox(x1 - x0, y1 - y0, z1 - z0, .8), m, (x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
 
-const mWood = std({ map: woodMap, color: 0xA06A40, roughness: .7 });
-const mWoodL = std({ map: woodMap, color: 0xD69A5E, roughness: .6 });
-const mWoodDark = std({ map: woodMap, color: 0x6A3A22, roughness: .7 });
-const mWhite = std({ color: 0xD8D0C2, roughness: .55 });
-const mPink = std({ color: 0xD9877E, roughness: .5 });
+// every furniture face gets a hand-inked border, like the outlined furniture in the Balming Tiger room
+const inkEdge = (x, w, h, k = .07) => { const t = Math.round(w * k); x.strokeStyle = '#2E170A'; x.lineWidth = t; x.strokeRect(t / 2, t / 2, w - t, h - t); };
+const inkTex = canvasTex(128, 128, (x, w, h) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(0,0,0,${rnd() * .05})`; x.fillRect(rnd() * w, rnd() * h, 6, 2); } inkEdge(x, w, h); });
+const woodInk = canvasTex(256, 256, (x, w, h) => { x.drawImage(woodMap.image, 0, 0, w, h); inkEdge(x, w, h); });
+const mWood = std({ map: woodInk, color: 0xB8693A, roughness: .7 });
+const mWoodL = std({ map: woodInk, color: 0xD98A4E, roughness: .6 });
+const mWoodDark = std({ map: woodInk, color: 0x7A3A1E, roughness: .7 });
+const mWhite = std({ map: inkTex, color: 0xEBDDBE, roughness: .55 });
+const mPink = std({ map: inkTex, color: 0xC9747A, roughness: .5 });
 const mBrass = std({ color: 0xB08A48, roughness: .3, metalness: .9 });
 const mMetal = std({ color: 0x222222, roughness: .35, metalness: .8 });
 const mBlack = std({ color: 0x0E0E0E, roughness: .4 });
@@ -566,8 +572,6 @@ const cloudTex = canvasTex(1024, 256, (x, w, h) => {
 }, true);
 const clouds = new THREE.Mesh(new THREE.PlaneGeometry(17, 4.2), new THREE.MeshBasicMaterial({ map: cloudTex, transparent: true, depthWrite: false, fog: false, toneMapped: false }));
 clouds.position.set(-6.9, 3.4, .6); clouds.rotation.y = Math.PI / 2; scene.add(clouds);
-const towerLight = halo(0xFF4A3A, 1.2, .35, new THREE.Vector3(-6.85, 2.15, -.9));
-const towerLight2 = halo(0xFF4A3A, 1.0, .25, new THREE.Vector3(-6.85, 1.6, 2.6));
 const railM = std({ color: 0x2A2C2E, roughness: .5, metalness: .7 });
 const BX = -RW + .08;
 [.55, 1.05].forEach(y => { const r = rbox(.035, .035, 3.0, railM, BX, y, 1.05, 0, scene, .01); });
@@ -794,7 +798,7 @@ function crunch(t, max = 256) {
   } catch (e) { t.needsUpdate = true; }
   return t;
 }
-const TEX_SIZE = new Map([[floorMap, 256], [plasterTex, 128], [ceilTex, 64], [rugTex, 128], [woodMap, 128], [skyTex, 512]]);
+const TEX_SIZE = new Map([[floorMap, 256], [plasterTex, 192], [ceilTex, 64], [rugTex, 128], [woodMap, 128], [woodInk, 128], [inkTex, 64], [skyTex, 512]]);
 // geometry: cap the smoothness of round things
 function lowPoly(o) {
   const g = o.geometry, P = g.parameters; if (!P || o.userData.keepGeo) return;
@@ -827,7 +831,8 @@ const retroCache = new Map();
 function retroOf(m) {
   if (!m || !(m.isMeshStandardMaterial)) return m;
   if (retroCache.has(m)) return retroCache.get(m);
-  const map = m.map ? crunch(m.map, TEX_SIZE.get(m.map) || 256) : null;
+  const autoInk = inkAuto && !m.map && !m.transparent && !(m.sheen > 0) && !(m.emissiveIntensity > 0 && m.emissive && m.emissive.getHex());
+  const map = m.map ? crunch(m.map, TEX_SIZE.get(m.map) || 256) : (autoInk ? crunch(inkTex, 64) : null);
   const t = new THREE.MeshLambertMaterial({ color: m.color, map, emissive: m.emissive, emissiveMap: m.emissiveMap, emissiveIntensity: m.emissiveIntensity, transparent: m.transparent, opacity: m.opacity, side: m.side, alphaTest: m.alphaTest, alphaMap: m.alphaMap ? crunch(m.alphaMap, 128) : null, depthTest: m.depthTest, depthWrite: m.depthWrite, vertexColors: true,
     stencilWrite: m.stencilWrite, stencilRef: m.stencilRef, stencilFunc: m.stencilFunc, stencilZPass: m.stencilZPass });
   if (m.sheenColor && m.sheen > 0 && m.color) t.color = m.color.clone().lerp(m.sheenColor, .15);
@@ -840,7 +845,9 @@ function toonify(root) { root.traverse(o => { if (o.isMesh && !o.userData.isOutl
   o.material = Array.isArray(o.material) ? o.material.map(retroOf) : retroOf(o.material);
   if (!o.material.isMeshLambertMaterial && o.material.map) crunch(o.material.map, TEX_SIZE.get(o.material.map) || 256);
 } }); }
+let inkAuto = true;
 toonify(scene);
+inkAuto = false;
 for (let i = 0; i < globeMats.length; i++) globeMats[i] = retroOf(globeMats[i]);
 let inkDirty = false;
 // simple round blob shadows under furniture, like console games used
@@ -1252,7 +1259,7 @@ function animate(t, dt) {
   const now = new Date(), sec = now.getSeconds() + now.getMilliseconds() / 1000, mn = now.getMinutes() + sec / 60, hr = (now.getHours() % 12) + mn / 60;
   hands[0].rotation.z = -hr / 12 * TAU; hands[1].rotation.z = -mn / 60 * TAU; hands[2].rotation.z = -Math.floor(sec) / 60 * TAU;
   cloudTex.offset.x = (t * .004) % 1;
-  const bl = (Math.sin(t * 2.2) > .6) ? 1 : .08; towerLight.material.opacity = bl; towerLight2.material.opacity = (Math.sin(t * 2.2 + 2) > .6) ? 1 : .08;
+  
   const f = .85 + .2 * Math.sin(t * 9.1) + .1 * Math.sin(t * 23.7) + (Math.random() - .5) * .15;
   fireLight.intensity = (1.6 + 1.6 * lv) * f; fireHalo.material.color.setHex(0xFF7A2A).multiplyScalar(1.1 * f);
   flames.forEach(m => { m.material.uniforms.time.value = t; });
