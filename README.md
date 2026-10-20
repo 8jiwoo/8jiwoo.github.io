@@ -28,7 +28,7 @@ The menu along the top does the same thing. Turn the sound on (bottom right) for
 
 - **[three.js](https://threejs.org)**: the whole room is built in code, in a single `index.html`
 - **Fisheye lens**: the room is rendered into a 360° cube map, then bent through a custom shader
-- **PS2-era look**: low-poly geometry, 15-bit nearest-filtered textures, baked vertex lighting, blob shadows, linear fog and a dithered 16-bit framebuffer
+- **PS2-era look**: simple low-poly geometry wrapped in photographic textures, baked vertex lighting, blob shadows and linear fog
 - **Small touches**: drifting fog, swaying curtains, a clock showing the real time, and a terminal that types itself
 
 No build step and no framework. Just open `index.html` from a local server.
@@ -46,7 +46,9 @@ python3 -m http.server
 - **Diffuse Transmission Plant**: Eric Chadwick, © 2024 Darmstadt Graphics Group GmbH ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)), based on an original by Rico Cilliers ([CC0](https://creativecommons.org/publicdomain/zero/1.0/))
 - **Glass Vase with Flowers**: Eric Chadwick and Rico Cilliers ([CC0](https://creativecommons.org/publicdomain/zero/1.0/))
 
-Night environment light from the [three.js examples](https://github.com/mrdoob/three.js/tree/dev/examples/textures). Menu layout inspired by [Balming Tiger](https://balmingtiger.com).
+Photo textures: wood grain and woven fabric from the **Sheen Chair** sample by Eric Chadwick / Wayfair ([CC0](https://creativecommons.org/publicdomain/zero/1.0/)); floorboard and checker-tile photos from the [three.js examples](https://github.com/mrdoob/three.js/tree/dev/examples/textures).
+
+Night environment light also from the three.js examples. Menu layout inspired by [Balming Tiger](https://balmingtiger.com).
 
 ---
 

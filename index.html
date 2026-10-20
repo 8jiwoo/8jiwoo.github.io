@@ -29,7 +29,7 @@ a{color:inherit;text-decoration:none}
 :focus-visible{outline:1px solid var(--white);outline-offset:3px}
 [hidden]{display:none!important}
 
-#view{position:fixed;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated;touch-action:none;cursor:grab;outline:none}
+#view{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab;outline:none}
 #view.grab{cursor:grabbing}
 
 /* pill buttons, as on balmingtiger.com */
@@ -252,7 +252,7 @@ function stains(x, w, h, n, a, col = '70,45,20') {
 /* ---------- textures ---------- */
 const A = 'assets/';
 // cartoon floorboards: warm brown planks with inked seams and a few grain strokes
-const floorMap = canvasTex(2048, 2048, (x, w, h) => {
+const floorMap = canvasTex(1024, 1024, (x, w, h) => {
   const cols = ['#6B4423', '#734A26', '#5E3C1F', '#7A5029', '#664020', '#704626'];
   const pw = w / 8;
   for (let i = 0; i < 8; i++) { let y = -rnd() * 600; while (y < h) { const len = 520 + rnd() * 720, x0 = i * pw;
@@ -265,11 +265,12 @@ const floorMap = canvasTex(2048, 2048, (x, w, h) => {
     x.strokeStyle = '#24130A'; x.lineWidth = 7; x.strokeRect(x0, y, pw, len);
     [[x0 + 12, y + 14], [x0 + pw - 12, y + 14], [x0 + 12, y + len - 14], [x0 + pw - 12, y + len - 14]].forEach(([nx, ny]) => { x.fillStyle = '#24130A'; x.beginPath(); x.arc(nx, ny, 4, 0, TAU); x.fill(); });
     y += len; } }
-}, true, 2.2, 2.8), floorBump = null, floorRough = null;
+}, true, 2.2, 2.8), floorBump = photo(A + 'hardwood2_bump.jpg', false, 4.4, 5.6), floorRough = photo(A + 'hardwood2_roughness.jpg', false, 4.4, 5.6);
 const woodMap = canvasTex(1024, 1024, (x, w, h) => { x.fillStyle = '#B07A48'; x.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(${rnd() < .5 ? '90,50,20' : '210,160,110'},${rnd() * .12})`; x.fillRect(rnd() * w, rnd() * h, 30 + rnd() * 90, 2); } x.strokeStyle = 'rgba(70,40,18,.5)'; x.lineWidth = 3; for (let i = 0; i < 34; i++) { const y0 = rnd() * h; x.beginPath(); x.moveTo(0, y0); x.bezierCurveTo(w * .3, y0 + (rnd() - .5) * 40, w * .7, y0 + (rnd() - .5) * 40, w, y0 + (rnd() - .5) * 20); x.stroke(); } }), woodRough = null, woodBump = null;
 // old painted plaster: tired off-white with damp stains
 // cartoon wallpaper: cream with mustard ornaments and little blue flowers
-const plasterTex = canvasTex(512, 512, (x, w, h) => {
+function drawWallpaper(x, w, h) {
+  x.save(); x.scale(w / 512, h / 512); w = 512; h = 512;
   x.fillStyle = '#F2CFA6'; x.fillRect(0, 0, w, h);
   const ink = '#7A4A1C';
   const damask = (cx, cy, s) => { x.save(); x.translate(cx, cy); x.scale(s, s); x.fillStyle = '#D9A441'; x.strokeStyle = ink; x.lineWidth = 3 / s; x.lineJoin = 'round';
@@ -283,8 +284,9 @@ const plasterTex = canvasTex(512, 512, (x, w, h) => {
     [[0, -9], [9, 0], [0, 9], [-9, 0]].forEach(([px, py]) => { x.fillStyle = '#86A9CF'; x.beginPath(); x.arc(px, py, 7, 0, TAU); x.fill(); x.stroke(); });
     x.fillStyle = '#F2CFA6'; x.beginPath(); x.arc(0, 0, 4, 0, TAU); x.fill(); x.stroke(); x.restore(); };
   for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) { damask(i * 256 + 128, j * 256 + 128, 1.2); flower(i * 256, j * 256, 1.1); flower(i * 256 + 256, j * 256, 1.1); flower(i * 256, j * 256 + 256, 1.1); }
-  for (let i = 0; i < 2500; i++) { x.fillStyle = `rgba(150,90,40,${rnd() * .07})`; x.fillRect(rnd() * w, rnd() * h, 2, 2); }
-}, true);
+  x.restore();
+}
+const plasterTex = canvasTex(512, 512, drawWallpaper, true);
 const plasterNormal = null;
 const ceilTex = canvasTex(512, 512, (x, w, h) => { x.fillStyle = '#B88878'; x.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { x.strokeStyle = `rgba(${rnd() < .5 ? '140,90,75' : '215,170,150'},${.08 + rnd() * .1})`; x.lineWidth = 3 + rnd() * 6; const sx = rnd() * w, sy = rnd() * h; x.beginPath(); x.moveTo(sx, sy); x.quadraticCurveTo(sx + 30, sy + (rnd() - .5) * 20, sx + 60 + rnd() * 60, sy + (rnd() - .5) * 10); x.stroke(); } for (let i = 0; i < 3000; i++) { x.fillStyle = `rgba(200,110,80,${rnd() * .08})`; x.fillRect(rnd() * w, rnd() * h, 3, 3); } });
 const rugTex = canvasTex(1024, 768, (x, w, h) => {
@@ -382,6 +384,46 @@ const skyTex = canvasTex(2048, 1152, (x, w, h) => {
   speckle(x, w, h, 20000, .05, true);
 });
 
+/* ---------- photographs composited into the painted textures ---------- */
+const imgL = new THREE.ImageLoader(manager);
+const loadImg = u => new Promise(res => imgL.load(u, res, undefined, () => res(null)));
+function resizeTex(t, w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; t.dispose(); t.image = c; t.userData.canvas = c; t.userData.ctx = c.getContext('2d'); return t.userData.ctx; }
+function tile(x, img, w, h, n, m = n) { if (!img) return; for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) x.drawImage(img, i * w / n, j * h / m, w / n, h / m); }
+function blotches(x, w, h, n, a, col, rmin = .08, rmax = .3) { for (let i = 0; i < n; i++) { const cx = rnd() * w, cy = rnd() * h, r = w * (rmin + rnd() * (rmax - rmin)); const g = x.createRadialGradient(cx, cy, 0, cx, cy, r); g.addColorStop(0, `rgba(${col},${a * (.4 + rnd() * .6)})`); g.addColorStop(1, `rgba(${col},0)`); x.fillStyle = g; x.fillRect(cx - r, cy - r, 2 * r, 2 * r); } }
+function scratches(x, w, h, n, a, light = true) { x.lineCap = 'round'; for (let i = 0; i < n; i++) { const sx = rnd() * w, sy = rnd() * h, len = w * (.03 + rnd() * .12), an = rnd() * TAU; x.strokeStyle = light ? `rgba(255,240,215,${a * rnd()})` : `rgba(30,18,8,${a * rnd()})`; x.lineWidth = .6 + rnd() * 1.2; x.beginPath(); x.moveTo(sx, sy); x.quadraticCurveTo(sx + Math.cos(an) * len * .5 + (rnd() - .5) * 6, sy + Math.sin(an) * len * .5 + (rnd() - .5) * 6, sx + Math.cos(an) * len, sy + Math.sin(an) * len); x.stroke(); } }
+// worn edges: a soft darker rim, lighter chips where paint/finish has rubbed off
+function wornEdge(x, w, h, dark = .35, chipCol = '235,225,205') {
+  const b = w * .055;
+  [[0, 0, w, b, 0, 0, 0, b], [0, h - b, w, b, 0, h, 0, h - b], [0, 0, b, h, 0, 0, b, 0], [w - b, 0, b, h, w, 0, w - b, 0]].forEach(([rx, ry, rw, rh, x0, y0, x1, y1]) => { const g = x.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, `rgba(25,14,6,${dark})`); g.addColorStop(1, 'rgba(25,14,6,0)'); x.fillStyle = g; x.fillRect(rx, ry, rw, rh); });
+  for (let i = 0; i < 40; i++) { const side = Math.floor(rnd() * 4), t = rnd(), d = rnd() * b * .5, len = 3 + rnd() * 14;
+    const px = side < 2 ? t * w : (side === 2 ? d : w - d), py = side < 2 ? (side === 0 ? d : h - d) : t * h;
+    x.fillStyle = `rgba(${chipCol},${.18 + rnd() * .3})`; x.fillRect(px, py, side < 2 ? len : 2 + rnd() * 2, side < 2 ? 2 + rnd() * 2 : len); }
+}
+function smudges(x, w, h, n, a) { for (let i = 0; i < n; i++) { const cx = w * (.2 + rnd() * .6), cy = h * (.2 + rnd() * .6); x.save(); x.translate(cx, cy); x.rotate(rnd() * TAU); const g = x.createRadialGradient(0, 0, 0, 0, 0, 10); g.addColorStop(0, `rgba(60,45,35,${a})`); g.addColorStop(1, 'rgba(60,45,35,0)'); x.fillStyle = g; x.scale(1, .7); x.fillRect(-10, -10, 20, 20); x.restore(); } }
+const bump = t => { t.needsUpdate = true; needCapture = 3; };
+Promise.all([loadImg(A + 'wood_grain.jpg'), loadImg(A + 'fabric_weave.jpg'), loadImg(A + 'hardwood2_diffuse.jpg')]).then(([wood, fab, plank]) => {
+  seed = 41;
+  // floor: photographed planks with gentle tone variation, scuffs and dust
+  { const x = resizeTex(floorMap, 2048, 2048); tile(x, plank, 2048, 2048, 2);
+    blotches(x, 2048, 2048, 14, .16, '40,22,10'); blotches(x, 2048, 2048, 8, .1, '230,200,160'); scratches(x, 2048, 2048, 160, .22); bump(floorMap); }
+  // furniture wood: photographed grain, worn edges, fine scratches, faint fingerprints
+  { const x = resizeTex(woodInk, 1024, 1024); tile(x, wood, 1024, 1024, 2);
+    x.globalCompositeOperation = 'multiply'; blotches(x, 1024, 1024, 10, .25, '150,120,95', .1, .35); x.globalCompositeOperation = 'source-over';
+    scratches(x, 1024, 1024, 70, .25); smudges(x, 1024, 1024, 8, .05); wornEdge(x, 1024, 1024, .38, '250,235,210'); bump(woodInk); }
+  // painted furniture: paint over wood (grain faintly shows), scuffed edges, a few marks
+  { const x = resizeTex(inkTex, 512, 512); x.fillStyle = '#fff'; x.fillRect(0, 0, 512, 512);
+    x.globalAlpha = .1; tile(x, wood, 512, 512, 1); x.globalAlpha = 1;
+    blotches(x, 512, 512, 6, .05, '90,80,60'); scratches(x, 512, 512, 18, .14, false); smudges(x, 512, 512, 5, .05); wornEdge(x, 512, 512, .22, '120,95,70'); bump(inkTex); }
+  // wallpaper: printed on real paper, with a little uneven fading
+  { const x = resizeTex(plasterTex, 1024, 1024); drawWallpaper(x, 1024, 1024);
+    x.globalCompositeOperation = 'multiply'; x.globalAlpha = .55; tile(x, fab, 1024, 1024, 3); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over';
+    blotches(x, 1024, 1024, 5, .05, '120,80,40', .2, .45); blotches(x, 1024, 1024, 4, .05, '255,245,225', .2, .4); bump(plasterTex); }
+  // ceiling: paint with a slight texture
+  { const x = ceilTex.userData.ctx; x.globalCompositeOperation = 'multiply'; x.globalAlpha = .45; tile(x, fab, 512, 512, 2); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; bump(ceilTex); }
+  // rug and window-seat cushion: woven fabric
+  [[rugTex, 6, 4, .7], [ikatTex, 2, 2, .6]].forEach(([t, n, m, al]) => { const c = t.userData.canvas, x = t.userData.ctx; x.globalCompositeOperation = 'multiply'; x.globalAlpha = al; tile(x, fab, c.width, c.height, n, m); x.globalAlpha = 1; x.globalCompositeOperation = 'source-over'; bump(t); });
+});
+
 /* ================================ SCENE ================================ */
 const FOG = 0x3B4856;
 const scene = new THREE.Scene();
@@ -413,7 +455,7 @@ const wall = (x0, x1, z0, z1, y0 = 0, y1 = RH, m = wallM) => add(tiledBox(x1 - x
 // every furniture face gets a hand-inked border, like the outlined furniture in the Balming Tiger room
 const inkEdge = (x, w, h, k = .07) => { const t = Math.round(w * k); x.strokeStyle = '#2E170A'; x.lineWidth = t; x.strokeRect(t / 2, t / 2, w - t, h - t); };
 const inkTex = canvasTex(128, 128, (x, w, h) => { x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { x.fillStyle = `rgba(0,0,0,${rnd() * .05})`; x.fillRect(rnd() * w, rnd() * h, 6, 2); } inkEdge(x, w, h); });
-const woodInk = canvasTex(256, 256, (x, w, h) => { x.drawImage(woodMap.image, 0, 0, w, h); inkEdge(x, w, h); });
+const woodInk = canvasTex(512, 512, (x, w, h) => { x.drawImage(woodMap.image, 0, 0, w, h); inkEdge(x, w, h); });
 const mWood = std({ map: woodInk, color: 0xB8693A, roughness: .7 });
 const mWoodL = std({ map: woodInk, color: 0xD98A4E, roughness: .6 });
 const mWoodDark = std({ map: woodInk, color: 0x7A3A1E, roughness: .7 });
@@ -423,13 +465,13 @@ const mBrass = std({ color: 0xB08A48, roughness: .3, metalness: .9 });
 const mMetal = std({ color: 0x222222, roughness: .35, metalness: .8 });
 const mBlack = std({ color: 0x0E0E0E, roughness: .4 });
 const mIron = std({ color: 0x141414, roughness: .55, metalness: .6 });
-const mCream = new THREE.MeshPhysicalMaterial({ color: 0xBDB3A0, roughness: .9, sheen: .6, sheenColor: new THREE.Color(0xE0D8C8), normalMap: fabricNormal, normalScale: new THREE.Vector2(.3, .3), envMapIntensity: .3 });
+const mCream = new THREE.MeshPhysicalMaterial({ map: photo(A + "fabric_weave.jpg", true, 2, 2), color: 0xC9BFAC, roughness: .9, sheen: .6, sheenColor: new THREE.Color(0xE0D8C8), normalMap: fabricNormal, normalScale: new THREE.Vector2(.3, .3), envMapIntensity: .3 });
 const glowMat = (map, c = 0xffffff, k = 1) => new THREE.MeshBasicMaterial({ map, color: new THREE.Color(c).multiplyScalar(k), toneMapped: false });
 const glowT = canvasTex(128, 128, (x, w, h) => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,255,255,.35)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, w, h); }, false);
 function halo(color, k, size, pos) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, color: new THREE.Color(color).multiplyScalar(k), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false })); s.scale.set(size, size, 1); s.position.copy(pos); scene.add(s); return s; }
 
 /* ---------- shell ---------- */
-const floorM = std({ map: floorMap, roughness: .6 });
+const floorM = std({ map: floorMap, roughnessMap: floorRough, bumpMap: floorBump, bumpScale: 1.2, color: 0xB08A70, roughness: .75, envMapIntensity: .4 });
 plane(2 * RW, 2 * RD, floorM, 0, 0, 0, -Math.PI / 2, 0).renderOrder = -2;
 const ceilM = std({ map: ceilTex, roughness: .95 });
 plane(2 * RW, 2 * RD, ceilM, 0, RH, 0, Math.PI / 2, 0);
@@ -486,6 +528,19 @@ for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) {
 const sh = group(1.78, 0, MZ + .18);
 rbox(.42, 2.3, .02, mWhite, 0, 1.15, -.16, 0, sh, .004);
 [-.2, .2].forEach(x => rbox(.025, 2.3, .34, mWhite, x, 1.15, 0, 0, sh, .005));
+const TITLES = ['NETWORK SECURITY', 'APPLIED CRYPTO', 'PYTHON', 'LINUX BIBLE', 'HACKING', 'CLEAN CODE', 'NORWEGIAN WOOD', 'KAFKA', 'JLPT N5', '한국어', 'TCP/IP', 'THE ART OF WAR', 'SQL', 'JAVA', 'DUNE', 'POEMS'];
+const SPINE_BG = ['#7A2E22', '#2E4A5E', '#C9A24A', '#3E5A3A', '#1E1E22', '#8A5A3A', '#5A3E66', '#B8B0A0', '#C25A3A', '#2A3A6A', '#4E6A6A', '#6A1E1E', '#D8C8A0', '#3A3A3A', '#9A7A40', '#5E7A9A'];
+const spineAtlas = canvasTex(1024, 512, (x, w, h) => {
+  TITLES.forEach((t, i) => {
+    const x0 = i * 64; x.fillStyle = SPINE_BG[i]; x.fillRect(x0, 0, 64, h);
+    const light = ['#B8B0A0', '#D8C8A0', '#C9A24A'].includes(SPINE_BG[i]);
+    x.fillStyle = light ? '#2A1E14' : '#EDE2C8';
+    x.fillRect(x0 + 6, 26, 52, 4); x.fillRect(x0 + 6, h - 40, 52, 4);
+    x.save(); x.translate(x0 + 32, h / 2); x.rotate(Math.PI / 2); x.font = '700 30px "Inter Tight", Helvetica, Arial, sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(t, 0, 0, h - 90); x.restore();
+  });
+});
+const spineMats = TITLES.map((_, i) => { const t = spineAtlas.clone(); t.repeat.set(1 / 16, 1); t.offset.set(i / 16, 0); t.needsUpdate = true; return std({ map: t, roughness: .7 }); });
 const bookCols = [0x5E2419, 0x6A5A26, 0x273F3F, 0x3E3250, 0x4E5A32, 0x7A6A4E, 0x32241A, 0x5A3A2A, 0x8A7A5E, 0x2A2A2A];
 const bookMats = bookCols.map(c => std({ color: c, roughness: .7 }));
 for (let s = 0; s < 6; s++) {
@@ -495,7 +550,9 @@ for (let s = 0; s < 6; s++) {
   while (x < .14) {
     const w = .025 + rnd() * .028, h = .2 + rnd() * .1;
     if (rnd() < .12) { x += .07; continue; }
-    const b = rbox(w, h, .2 + rnd() * .05, bookMats[Math.floor(rnd() * bookMats.length)], x + w / 2, y0 + .013 + h / 2, .02, 0, sh, .004);
+    const bd = .2 + rnd() * .05, bi = Math.floor(rnd() * 16);
+    const b = rbox(w, h, bd, std({ color: new THREE.Color(SPINE_BG[bi]).multiplyScalar(.9), roughness: .7 }), x + w / 2, y0 + .013 + h / 2, .02 + (rnd() - .5) * .03, (rnd() - .5) * .04, sh);
+    add(new THREE.PlaneGeometry(w * .92, h * .97), spineMats[bi], 0, 0, bd / 2 + .0015, 0, b);
     if (rnd() < .08) b.rotation.z = .2;
     x += w + .003;
   }
@@ -538,6 +595,9 @@ cyl(.04, .04, .009, 24, std({ color: 0xA8301F, roughness: .5 }), 0, 1.067, -.14,
 const tonearm = rbox(.012, .012, .2, mMetal, .17, 1.08, -.1, .25, pc, .004);
 const scC = sconce(-RW + .02, 1.95, MZ + .55, Math.PI / 2);
 const seat = group(-RW + .29, 0, -1.1);
+// a blanket folded (not quite neatly) at the end of the window seat
+const throwM = std({ map: photo(A + 'fabric_weave.jpg', true, 1, 1), color: 0xA8483A, roughness: .95 });
+[0, 1, 2].forEach(i => { const f = rbox(.34 - i * .01, .042, .25, throwM, -RW + .42 + (rnd() - .5) * .02, .525 + i * .043, -.62 + (rnd() - .5) * .02, (rnd() - .5) * .08); });
 rbox(.56, .4, 1.28, mPink, 0, .2, 0, 0, seat, .012);
 rbox(.54, .1, 1.26, new THREE.MeshPhysicalMaterial({ map: ikatTex, roughness: .9, sheen: .5, sheenColor: new THREE.Color(0xE0A8A0), normalMap: fabricNormal, normalScale: new THREE.Vector2(.3, .3), envMapIntensity: .3 }), 0, .45, 0, 0, seat, .04);
 [-.32, .32].forEach(z => { const c = rbox(.14, .42, .5, mCream, -.2, .7, z, 0, seat, .06); c.rotation.z = -.15; });
@@ -553,7 +613,8 @@ add(new THREE.PlaneGeometry(1.8, 1.92), new THREE.MeshPhysicalMaterial({ color: 
 [[0, .96, 1.86, .06], [0, -.96, 1.86, .06], [0, .25, 1.8, .04]].forEach(([x, y, w, h]) => rbox(w, h, .07, mWhite, x, y, -.05, 0, tw, .006));
 [-.9, -.3, .3, .9].forEach(x => rbox(.06, 1.92, .07, mWhite, x, 0, -.05, 0, tw, .006));
 const curtains = [];
-const curtM = new THREE.MeshPhysicalMaterial({ color: 0xB8AE98, roughness: .9, sheen: 1, sheenRoughness: .5, sheenColor: new THREE.Color(0xD8D0C0), side: THREE.DoubleSide, normalMap: fabricNormal, normalScale: new THREE.Vector2(.3, .3), envMapIntensity: .3 });
+const fabricPhoto = photo(A + 'fabric_weave.jpg', true, 3, 7);
+const curtM = new THREE.MeshPhysicalMaterial({ map: fabricPhoto, color: 0xC4B89E, roughness: .9, sheen: 1, sheenRoughness: .5, sheenColor: new THREE.Color(0xD8D0C0), side: THREE.DoubleSide, normalMap: fabricNormal, normalScale: new THREE.Vector2(.3, .3), envMapIntensity: .3 });
 [-.12, 1.82].forEach(z => {
   const geo = new THREE.PlaneGeometry(.42, 2.3, 48, 8), p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) { const u = p.getX(i), v = p.getY(i); p.setZ(i, Math.sin(u * 42 + v * .3) * .035 + Math.sin(u * 15) * .015); }
@@ -589,6 +650,11 @@ rbox(.66, .03, .44, std({ color: 0xB8968E, roughness: .5 }), 0, .14, 0, 0, table
 [[-.32, -.21], [.32, -.21], [-.32, .21], [.32, .21]].forEach(([x, z]) => rbox(.035, .4, .035, mBlack, x, .2, z, 0, table, .006));
 cyl(.1, .07, .05, 32, std({ color: 0x1A1A1A, roughness: .35 }), -.1, .45, .02, table);
 rbox(.24, .012, .18, std({ color: 0x7A5E26, roughness: .8 }), .16, .431, .05, .3, table, .002);
+// mug, a second magazine left askew, the TV remote
+cyl(.038, .034, .09, 16, std({ color: 0xD8CFC0, roughness: .35 }), .26, .47, -.15, table);
+add(new THREE.TorusGeometry(.024, .006, 6, 10, Math.PI), std({ color: 0xD8CFC0, roughness: .35 }), .3, .475, -.15, Math.PI / 2, table).rotation.z = -Math.PI / 2;
+rbox(.2, .008, .15, std({ color: 0x3E5A86, roughness: .75 }), .2, .441, .02, -.25, table);
+rbox(.05, .02, .16, std({ color: 0x1E1E1E, roughness: .5 }), -.27, .436, .12, .4, table);
 
 /* ---------- back: square dining table, two upholstered benches ---------- */
 const dt = group(.68, 0, 1.95);
@@ -626,7 +692,8 @@ const hallLight = new THREE.PointLight(0xB0C0D0, .5, 3, 2); hallLight.position.s
 
 /* ---------- right: kitchen with breakfast bar ---------- */
 const KX = RW + T, KD = 1.7;
-plane(KD, 2.4, std({ map: canvasTex(512, 512, (x, w, h) => { x.fillStyle = '#B8B2A2'; x.fillRect(0, 0, w, h); x.strokeStyle = 'rgba(60,55,45,.45)'; x.lineWidth = 3; for (let i = 0; i <= w; i += 64) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, h); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(w, i); x.stroke(); } stains(x, w, h, 10, .3); speckle(x, w, h, 12000, .12); }, true, 2, 3), roughness: .4 }), KX + KD / 2, 0.001, .78, -Math.PI / 2, 0);
+plane(KD, 2.4, std({ map: photo(A + 'tile_floor.jpg', true, 2, 3), color: 0xD8D2C4, roughness: .45 }), KX + KD / 2, 0.001, .78, -Math.PI / 2, 0);
+if (0) plane(KD, 2.4, std({ map: canvasTex(512, 512, (x, w, h) => { x.fillStyle = '#B8B2A2'; x.fillRect(0, 0, w, h); x.strokeStyle = 'rgba(60,55,45,.45)'; x.lineWidth = 3; for (let i = 0; i <= w; i += 64) { x.beginPath(); x.moveTo(i, 0); x.lineTo(i, h); x.stroke(); x.beginPath(); x.moveTo(0, i); x.lineTo(w, i); x.stroke(); } stains(x, w, h, 10, .3); speckle(x, w, h, 12000, .12); }, true, 2, 3), roughness: .4 }), KX + KD / 2, 0.001, .78, -Math.PI / 2, 0);
 plane(KD, 2.4, ceilM, KX + KD / 2, RH, .78, Math.PI / 2, 0);
 wall(KX + KD, KX + KD + .1, -.25, 1.8);
 wall(KX, KX + KD + .1, -.25, -.15, 0, RH);
@@ -779,23 +846,9 @@ function pickables() {
 // textures: shrink to console-sized maps, 15-bit colour, nearest-neighbour sampling
 const DYNAMIC_TEX = new Set([crtTex, scrollTex, tvTex, glowT]);
 const crunched = new Set();
-function crunch(t, max = 256) {
+function crunch(t) {
   if (!t || crunched.has(t)) return t; crunched.add(t);
-  t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestMipmapNearestFilter; t.anisotropy = 1;
-  const img = t.image; if (DYNAMIC_TEX.has(t) || !img || !img.width) { t.needsUpdate = true; return t; }
-  const k = Math.min(1, max / Math.max(img.width, img.height));
-  const w = Math.max(8, Math.round(img.width * k)), h = Math.max(8, Math.round(img.height * k));
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
-  try {
-    x.drawImage(img, 0, 0, w, h);
-    const id = x.getImageData(0, 0, w, h), p = id.data;
-    const B = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
-    for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const o = (j * w + i) * 4, dd = (B[(j & 3) * 4 + (i & 3)] / 16 - .5) * 8;
-      for (let ch = 0; ch < 3; ch++) p[o + ch] = Math.max(0, Math.min(255, Math.round((p[o + ch] + dd) / 8) * 8)); }
-    x.putImageData(id, 0, 0);
-    t.image = c; t.needsUpdate = true;
-  } catch (e) { t.needsUpdate = true; }
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy(); t.needsUpdate = true;
   return t;
 }
 const TEX_SIZE = new Map([[floorMap, 256], [plasterTex, 192], [ceilTex, 64], [rugTex, 128], [woodMap, 128], [woodInk, 128], [inkTex, 64], [skyTex, 512]]);
@@ -832,18 +885,15 @@ function retroOf(m) {
   if (!m || !(m.isMeshStandardMaterial)) return m;
   if (retroCache.has(m)) return retroCache.get(m);
   const autoInk = inkAuto && !m.map && !m.transparent && !(m.sheen > 0) && !(m.emissiveIntensity > 0 && m.emissive && m.emissive.getHex());
-  const map = m.map ? crunch(m.map, TEX_SIZE.get(m.map) || 256) : (autoInk ? crunch(inkTex, 64) : null);
-  const t = new THREE.MeshLambertMaterial({ color: m.color, map, emissive: m.emissive, emissiveMap: m.emissiveMap, emissiveIntensity: m.emissiveIntensity, transparent: m.transparent, opacity: m.opacity, side: m.side, alphaTest: m.alphaTest, alphaMap: m.alphaMap ? crunch(m.alphaMap, 128) : null, depthTest: m.depthTest, depthWrite: m.depthWrite, vertexColors: true,
-    stencilWrite: m.stencilWrite, stencilRef: m.stencilRef, stencilFunc: m.stencilFunc, stencilZPass: m.stencilZPass });
-  if (m.sheenColor && m.sheen > 0 && m.color) t.color = m.color.clone().lerp(m.sheenColor, .15);
-  if (m.metalness > .5) t.color = t.color.clone().multiplyScalar(1.25);   // brass reads brighter without real reflections
+  const t = m.clone(); t.vertexColors = true;
+  if (autoInk) { t.map = inkTex; t.roughness = Math.max(.45, m.roughness); }
+  [t.map, t.roughnessMap, t.normalMap].forEach(crunch);
   retroCache.set(m, t); return t;
 }
 function toonify(root) { root.traverse(o => { if (o.isMesh && !o.userData.isOutline) {
   const ms = Array.isArray(o.material) ? o.material : [o.material];
   if (ms.some(x => x && x.isMeshStandardMaterial)) { if (!o.userData.isCurtain) lowPoly(o); bake(o); }
   o.material = Array.isArray(o.material) ? o.material.map(retroOf) : retroOf(o.material);
-  if (!o.material.isMeshLambertMaterial && o.material.map) crunch(o.material.map, TEX_SIZE.get(o.material.map) || 256);
 } }); }
 let inkAuto = true;
 toonify(scene);
@@ -863,14 +913,14 @@ rug.castShadow = false;
 moon.castShadow = false; moon.shadow.mapSize.set(16, 16); Object.assign(moon.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: .5, far: 16 }); moon.shadow.camera.updateProjectionMatrix(); moon.shadow.bias = -.0015;
 
 /* ================================ 360 CAPTURE + LENS ================================ */
-const LINES = 460; const lowPR = () => Math.min(1, LINES / Math.min(innerWidth, innerHeight)) * (small ? 1.6 : 1);
+const lowPR = () => Math.min(window.devicePixelRatio || 1, small ? 2 : 1.5);
 renderer.setPixelRatio(lowPR());
 renderer.shadowMap.enabled = false; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.shadowMap.autoUpdate = false; renderer.shadowMap.needsUpdate = true;
 const pmrem = new THREE.PMREMGenerator(renderer);
 new RGBELoader(manager).load(A + 'night.hdr.bin', t => { t.mapping = THREE.EquirectangularReflectionMapping; scene.environment = pmrem.fromEquirectangular(t).texture; t.dispose(); needCapture = 3; });
 const maxCube = renderer.capabilities.maxCubemapSize || 2048;
-let FACE = Math.min(small || location.hash === '#lo' ? 384 : 512, maxCube);
-let cubeRT = new THREE.WebGLCubeRenderTarget(FACE, { type: THREE.HalfFloatType, generateMipmaps: false, minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, stencilBuffer: true });
+let FACE = Math.min(small || location.hash === '#lo' ? 768 : 1536, maxCube);
+let cubeRT = new THREE.WebGLCubeRenderTarget(FACE, { type: THREE.HalfFloatType, generateMipmaps: false, minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, stencilBuffer: true });
 let cubeCam = new THREE.CubeCamera(.03, 40, cubeRT);
 cubeCam.position.copy(EYE); scene.add(cubeCam);
 // a second capture of the room storing surface direction + distance, used to draw the ink lines
@@ -926,10 +976,6 @@ const post = new THREE.ShaderMaterial({
       col = mix(col, col * vec3(1.06, 1.0, .9), l * l);                      // aged warm whites
       col = mix(col, col * vec3(.86, .94, 1.1), .45);                        // keep the blue-hour mood
       col = clamp((col - .4) * 1.1 + .4, 0.0, 1.0);
-      // 16-bit framebuffer: 5 bits per channel with a 4x4 ordered dither
-      vec2 dp = mod(floor(gl_FragCoord.xy), 4.0);
-      float b4 = (mod(dp.x + dp.y * 2.0, 4.0) * 4.0 + mod(dp.y + dp.x * 3.0, 4.0) + .5) / 16.0;
-      col = floor(col * 31.0 + b4) / 31.0;
       float rc = r / (length(res) / (2.0 * m));
       col *= 1.0 - .22 * smoothstep(.45, 1.1, rc);
       gl_FragColor = vec4(col * fade, 1.0);
