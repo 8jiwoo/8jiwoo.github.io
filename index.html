@@ -101,7 +101,7 @@ a{color:inherit;text-decoration:none}
   .nav{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px))}
   .nav button{font-size:12px;padding:15px 0 8px}
   .panel{left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));width:auto;max-width:none;top:auto;bottom:calc(60px + env(safe-area-inset-bottom,0px))}
-  .panel .inner{max-height:60vh}
+  .panel .inner{max-height:46vh}
   .hint{bottom:calc(72px + env(safe-area-inset-bottom,0px))}
 }
 /* phones: Balming Tiger moves the menu to the bottom, centred, without the rules */
@@ -880,7 +880,7 @@ const narrow = () => innerWidth < 720;
 const DEG = Math.PI / 180;
 const K_MIN = 35 * DEG, K_MAX = 140 * DEG, K_WHEEL_MIN = 60 * DEG;
 const K_HOME = () => 120 * DEG;
-const K_FOCUS = () => (narrow() ? 62 : 50) * DEG;
+const K_FOCUS = () => (narrow() ? 36 : 50) * DEG;
 // fisheye strength follows the fov (more bend zoomed out, nearly flat zoomed in)
 function proj(k) {
   const D = Math.max(0, Math.min(1, .25 + .55 * (k - 70 * DEG) / (70 * DEG)));
@@ -916,11 +916,11 @@ const SPOTS = {
 };
 const clampK = k => Math.max(K_MIN, Math.min(K_MAX, k));
 const clampP = p => Math.max(-1.4, Math.min(1.35, p));
-function aim(d, k) {
+function aim(d, k, lift = 0) {
   let ty = Math.atan2(-d[0], -d[2]);
   while (ty - yaw > Math.PI) ty -= TAU;
   while (ty - yaw < -Math.PI) ty += TAU;
-  goal = { yaw: ty, pitch: clampP(Math.asin(d[1])), K: clampK(k == null ? K : k), from: { yaw, pitch, K }, t: 0, dur: 2 };
+  goal = { yaw: ty, pitch: clampP(Math.asin(d[1]) - lift), K: clampK(k == null ? K : k), from: { yaw, pitch, K }, t: 0, dur: 2 };
   kTarget = null;
   if (reduce) { yaw = goal.yaw; pitch = goal.pitch; K = goal.K; goal = null; }
   vy = vp = 0;
@@ -1107,7 +1107,15 @@ function go(id) {
   if (was) { panel.classList.remove('open'); setTimeout(() => { if (openId === id) { fill(); panel.classList.add('open'); } }, 250); }
   else { panel.hidden = false; panel.style.height = '0px'; fill(); requestAnimationFrame(() => { panel.classList.add('open'); sizePanel(); }); }
   $$('[data-go]').forEach(b => { if (b.dataset.go !== 'lights') b.setAttribute('aria-expanded', b.dataset.go === id ? 'true' : 'false'); });
-  aim(SPOTS[id].view, K_FOCUS());
+  // on phones the panel covers the lower half, so frame the object in the space above it
+  let lift = 0;
+  if (narrow()) {
+    const ph = Math.min(panelBody.scrollHeight || innerHeight * .46, innerHeight * .46 + 70);
+    const freeTop = innerHeight - 60 - ph, m = .5 * Math.min(innerWidth, innerHeight);
+    const dy = innerHeight / 2 - Math.max(70, freeTop / 2);
+    if (dy > 0) lift = rToTheta(dy / m, proj(K_FOCUS()));
+  }
+  aim(SPOTS[id].view, K_FOCUS(), lift);
   Snd.click();
 }
 function closePanel() {
