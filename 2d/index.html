@@ -611,7 +611,7 @@ precision highp float;
 uniform sampler2D tCol, tId, tTerm;
 uniform vec2 res; uniform float S, D, half_, lv, fade, time, idTx;
 uniform vec3 F, R, U;
-uniform vec4 gA; uniform float gL; uniform vec4 tvR;
+uniform vec4 gA; uniform float gL; uniform vec4 tvR; uniform sampler2D tOn; uniform int mode, tvFace;
 out vec4 o;
 void face(vec3 d, out int k, out vec2 uv){
   vec3 a = abs(d), f, r, u;
@@ -629,9 +629,9 @@ void main(){
   float c = (-D * r2 + sqrt(1.0 + r2 * (1.0 - D * D))) / (1.0 + r2), s = sqrt(max(0.0, 1.0 - c * c));
   vec3 d = normalize(F * c + (R * n.x + U * n.y) * s);
   int k; vec2 uv; face(d, k, uv);
-  vec3 base = texture(tCol, cell(k, uv, .0004)).rgb;
+  vec3 base = texture(tCol, cell(k, uv, .0004)).rgb, baseOn = mode == 1 ? texture(tOn, cell(k, uv, .0004)).rgb : base;
   vec4 id = texture(tId, cell(k, uv, .001));
-  if (k == 5 && uv.x > tvR.x && uv.x < tvR.z && uv.y > tvR.y && uv.y < tvR.w) base = texture(tTerm, (uv - tvR.xy) / (tvR.zw - tvR.xy)).rgb;
+  if (k == tvFace && uv.x > tvR.x && uv.x < tvR.z && uv.y > tvR.y && uv.y < tvR.w) base = baseOn = texture(tTerm, (uv - tvR.xy) / (tvR.zw - tvR.xy)).rgb;
   vec3 E = vec3(0.0, 1.3, 0.0), dd = sign(d) * max(abs(d), vec3(1e-4));
   vec3 tm = max((vec3(-2.0, 0.0, -2.0) - E) / dd, (vec3(2.0, 2.7, 2.0) - E) / dd);
   vec3 P = E + d * min(min(tm.x, tm.y), tm.z);
@@ -645,6 +645,7 @@ void main(){
   day = mix(day, min(base * 1.18 + vec3(.06, .05, .0), 1.0), id.g);
   vec3 col = mix(night, day, lv);
   col = mix(col, base, id.b);
+  if (mode == 1) col = mix(base, baseOn, lv);
   float g0 = gw(id.r), g = 0.0;
   for (int i = 0; i < 12; i++) { float a = float(i) * .5236; vec2 o1 = vec2(cos(a), sin(a)) * idTx;
     vec2 u1 = uv + o1 * 5.0, u2 = uv + o1 * 12.0;
@@ -659,7 +660,7 @@ function sh(type, src) { const s = gl.createShader(type); gl.shaderSource(s, src
 const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); gl.useProgram(prog);
 const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
 const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-const U_ = {}; ['tCol', 'tId', 'tTerm', 'res', 'S', 'D', 'half_', 'lv', 'fade', 'time', 'idTx', 'F', 'R', 'U', 'gA', 'gL', 'tvR'].forEach(k => { U_[k] = gl.getUniformLocation(prog, k); });
+const U_ = {}; ['tCol', 'tId', 'tTerm', 'res', 'S', 'D', 'half_', 'lv', 'fade', 'time', 'idTx', 'F', 'R', 'U', 'gA', 'gL', 'tvR', 'tOn', 'mode', 'tvFace'].forEach(k => { U_[k] = gl.getUniformLocation(prog, k); });
 const aniso = gl.getExtension('EXT_texture_filter_anisotropic');
 const maxTex = gl.getParameter(gl.MAX_TEXTURE_SIZE);
 function makeTex(unit, mip = true) {
@@ -680,17 +681,59 @@ function atlas(unit, size) {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   return t;
 }
+/* ---------- your own drawing ----------
+   room/off.png  (required)  the room with the lights off, as a cross of six squares (4 wide x 3 tall)
+   room/on.png   (optional)  the same with the lights on; without it, lights on/off are tinted automatically
+   room/hotspots.png (optional)  same layout; paint clickable things in flat colours:
+     red #FF0000 = Projects, green #00FF00 = About, blue #0000FF = Skills, yellow #FFFF00 = Contact,
+     magenta #FF00FF = Lights, cyan #00FFFF = a screen that plays the terminal (also opens Projects)  */
+const CROSS = { 1: [0, 1], 5: [1, 1], 0: [2, 1], 4: [3, 1], 2: [1, 0], 3: [1, 2] };
+const LEGEND = [[255, 0, 0, 1], [0, 255, 0, 2], [0, 0, 255, 3], [255, 255, 0, 4], [255, 0, 255, 5], [0, 255, 255, 1]];
+async function customRoom(off, on, hot, x, ix, px, cc, ic) {
+  const T_ = off.width / 4; let texOn = null;
+  if (on) texOn = atlas(2, FS_);
+  gl.uniform1i(U_.mode, on ? 1 : 2); gl.uniform1i(U_.tvFace, -1);
+  let tv = null;
+  for (let k = 0; k < 6; k++) {
+    await new Promise(r => setTimeout(r, 0));
+    const [gx, gy] = CROSS[k];
+    const put = (img, tex, unit, can, ctx, size) => { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, size, size); ctx.drawImage(img, gx * T_, gy * T_, T_, T_, 0, 0, size, size);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex); gl.texSubImage2D(gl.TEXTURE_2D, 0, (k % 3) * size, Math.floor(k / 3) * size, gl.RGBA, gl.UNSIGNED_BYTE, can); };
+    x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+    put(off, texCol, 0, cc, x, FS_);
+    if (on) put(on, texOn, 2, cc, x, FS_);
+    ix.setTransform(1, 0, 0, 1, 0, 0); ix.fillStyle = '#000'; ix.fillRect(0, 0, IDS, IDS);
+    if (hot) { ix.imageSmoothingEnabled = false; ix.drawImage(hot, gx * T_, gy * T_, T_, T_, 0, 0, IDS, IDS);
+      const im = ix.getImageData(0, 0, IDS, IDS), p = im.data;
+      for (let i = 0; i < p.length; i += 4) { let best = 0, bd = 9e9, scr = false;
+        for (const [r, g, b, id] of LEGEND) { const dd = (p[i] - r) ** 2 + (p[i + 1] - g) ** 2 + (p[i + 2] - b) ** 2; if (dd < bd) { bd = dd; best = id; scr = r === 0 && g === 255 && b === 255; } }
+        if (bd > 9000 || p[i + 3] < 128) { best = 0; scr = false; }
+        if (scr) { const q = i / 4, u = (q % IDS) / IDS, v = Math.floor(q / IDS) / IDS; if (!tv || tv.k === k) { tv = tv || { k, u0: 1, v0: 1, u1: 0, v1: 0 }; tv.u0 = Math.min(tv.u0, u); tv.v0 = Math.min(tv.v0, v); tv.u1 = Math.max(tv.u1, u); tv.v1 = Math.max(tv.v1, v); } }
+        p[i] = best * 40; p[i + 1] = 0; p[i + 2] = 0; p[i + 3] = 255; }
+      ix.putImageData(im, 0, 0); }
+    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, texId); gl.texSubImage2D(gl.TEXTURE_2D, 0, (k % 3) * IDS, Math.floor(k / 3) * IDS, gl.RGBA, gl.UNSIGNED_BYTE, ic);
+    px.imageSmoothingEnabled = false; px.clearRect(0, 0, PICK, PICK); px.drawImage(ic, 0, 0, PICK, PICK); const dat = px.getImageData(0, 0, PICK, PICK).data, a = new Uint8Array(PICK * PICK);
+    for (let i = 0; i < a.length; i++) a[i] = Math.round(dat[i * 4] / 40); idFaces[k] = a;
+    loadFrac = (k + 1) / 6;
+  }
+  if (tv) { gl.uniform1i(U_.tvFace, tv.k); gl.uniform4f(U_.tvR, tv.u0, tv.v0, tv.u1, tv.v1); }
+}
+
 /* ---------- painting the room (during the loading screen) ---------- */
 const FS_ = (maxTex >= 6144 && !small) ? 2048 : 1024, IDS = FS_ / 2, PICK = 256;
 let loadFrac = 0, failed = false;
 const idFaces = [];
 const texCol = atlas(0, FS_), texId = atlas(1, IDS);
-gl.uniform1f(U_.idTx, 1 / IDS); gl.uniform4f(U_.tvR, ...tvRect());
+gl.uniform1f(U_.idTx, 1 / IDS); gl.uniform4f(U_.tvR, ...tvRect()); gl.uniform1i(U_.tOn, 2); gl.uniform1i(U_.mode, 0); gl.uniform1i(U_.tvFace, 5);
 (async () => {
   const cc = document.createElement('canvas'); cc.width = cc.height = FS_;
   const ic = document.createElement('canvas'); ic.width = ic.height = IDS;
   const pc = document.createElement('canvas'); pc.width = pc.height = PICK;
   const x = cc.getContext('2d'), ix = ic.getContext('2d'), px = pc.getContext('2d', { willReadFrequently: true });
+  // if you've drawn the room yourself, use your drawings instead of the built-in one
+  const loadI = src => new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
+  const [dOff, dOn, dHot] = await Promise.all([loadI('room/off.png'), loadI('room/on.png'), loadI('room/hotspots.png')]);
+  if (dOff) { try { await customRoom(dOff, dOn, dHot, x, ix, px, cc, ic); computeSpots(); } catch (e) { failed = true; console.error(e); } return; }
   await Promise.race([document.fonts.load('80px "Nanum Brush Script"', '하지우'), new Promise(r => setTimeout(r, 2500))]).catch(() => {});
   try {
     for (let k = 0; k < 6; k++) {
