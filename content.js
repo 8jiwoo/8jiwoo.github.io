@@ -24,7 +24,7 @@ window.CONTENT = {
         tech: 'JavaScript', links: [{ label: 'Code', url: 'https://github.com/8jiwoo/Plateloop' }, { label: 'Live', url: 'https://8jiwoo.github.io/Plateloop/' }] },
       { title: 'Personal Portfolio Website', sub: 'Web development project', img: 'assets/pano_4k.webp',
         detail: 'This site: my hand-drawn living room as a 360° space you can look around and click through.',
-        tech: 'HTML, CSS, JavaScript, WebGL, Python', links: [{ label: 'Code', url: 'https://github.com/8jiwoo/Portfolio-Website' }] },
+        tech: 'HTML, CSS, JavaScript, WebGL, Python', links: [{ label: 'Code', url: 'https://github.com/8jiwoo/8jiwoo.github.io' }] },
       { title: 'WhatsApp Inquiry Management System', sub: 'Web development project', img: 'assets/whatsapp.jpg',   // picture not added yet: shows a 'coming soon' tile until this file exists
         detail: 'AI-powered web platform that automates high-volume WhatsApp customer inquiries for retail and e-commerce. It answers common questions automatically, turns messages into trackable records and supports follow-ups, cutting manual work for sales representatives.' },
       { title: 'Full-Stack Application', sub: 'Full-stack development', img: 'assets/fullstack.jpg',   // picture not added yet

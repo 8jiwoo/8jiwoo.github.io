@@ -1,17 +1,17 @@
-# Portfolio-Website
+# 8jiwoo.github.io
 
 My hand-drawn living room as a 360° space you can look around. This repo holds two versions of it.
 
 ## 1. Full portfolio
 
-- **Link:** https://8jiwoo.github.io/Portfolio-Website/
+- **Link:** https://8jiwoo.github.io/
 - **File:** `index.html`
 
 Everything is clickable: Projects, Experience, Education, Certs, Awards, Volunteering, Artworks and Contact, plus the lights, the speaker and the globe.
 
 ## 2. Contact and art only
 
-- **Link:** https://8jiwoo.github.io/Portfolio-Website/contact.html
+- **Link:** https://8jiwoo.github.io/contact.html
 - **File:** `contact.html`
 
 The same room, but only the lights, the Artworks section and the Contact section respond. Everything else is scenery.
